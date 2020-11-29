@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{025F88AB-F349-4A8A-ABB5-2C71F4B1DBA2}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <ReleaseVersion>1.1</ReleaseVersion>
+    <AssemblyName>CrudDatastore</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\CrudDatastore\bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>..\CrudDatastore\bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\CrudDatastore\UnitOfWorkBase.cs">
+      <Link>UnitOfWorkBase.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\Specification.cs">
+      <Link>Specification.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IUnitOfWork.cs">
+      <Link>IUnitOfWork.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\ISpecification.cs">
+      <Link>ISpecification.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IQuery.cs">
+      <Link>IQuery.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IDataStore.cs">
+      <Link>IDataStore.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IDataQuery.cs">
+      <Link>IDataQuery.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IDataContext.cs">
+      <Link>IDataContext.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\ICrud.cs">
+      <Link>ICrud.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\EntityBase.cs">
+      <Link>EntityBase.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DelegateQueryAdapter.cs">
+      <Link>DelegateQueryAdapter.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DelegateCrudAdapter.cs">
+      <Link>DelegateCrudAdapter.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DataStore.cs">
+      <Link>DataStore.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DataQuery.cs">
+      <Link>DataQuery.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DataContextBase.cs">
+      <Link>DataContextBase.cs</Link>
+    </Compile>
+    <Compile Include="ProxyBuilder.cs" />
+    <Compile Include="..\CrudDatastore\Extensions.cs">
+      <Link>Extensions.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\ICommand.cs">
+      <Link>ICommand.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\Command.cs">
+      <Link>Command.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IDataCommand.cs">
+      <Link>IDataCommand.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DataQueryContextBase.cs">
+      <Link>DataQueryContextBase.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DataStoreContextBase.cs">
+      <Link>DataStoreContextBase.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+</Project>

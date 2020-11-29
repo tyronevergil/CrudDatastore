@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+    <ReleaseVersion>1.1</ReleaseVersion>
+    <RootNamespace>CrudDatastore.Test</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="nunit" Version="3.10.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.10.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="3.1.0" />           
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.0" />        
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Entities\" />
+    <Folder Include="Specifications\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\CrudDatastore\test\Person.cs">
+      <Link>Entities\Person.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\test\Identification.cs">
+      <Link>Entities\Identification.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\test\PersonSpecs.cs">
+      <Link>Specifications\PersonSpecs.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\test\DataContextTest.cs">
+      <Link>DataContextTest.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\test\UnitOfWorkInMemory.cs">
+      <Link>UnitOfWorkInMemory.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CrudDatastore.NetStandard20\CrudDatastore.NetStandard20.csproj" />
+  </ItemGroup>
+</Project>

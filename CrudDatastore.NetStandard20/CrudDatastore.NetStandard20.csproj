@@ -1,0 +1,92 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <ReleaseVersion>1.1</ReleaseVersion>
+    <AssemblyName>CrudDatastore</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>..\CrudDatastore\bin\Debug\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>..\CrudDatastore\bin\Release\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\CrudDatastore\UnitOfWorkBase.cs">
+      <Link>UnitOfWorkBase.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\Specification.cs">
+      <Link>Specification.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IUnitOfWork.cs">
+      <Link>IUnitOfWork.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\ISpecification.cs">
+      <Link>ISpecification.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IQuery.cs">
+      <Link>IQuery.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IDataStore.cs">
+      <Link>IDataStore.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IDataQuery.cs">
+      <Link>IDataQuery.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IDataContext.cs">
+      <Link>IDataContext.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\ICrud.cs">
+      <Link>ICrud.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\EntityBase.cs">
+      <Link>EntityBase.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DelegateQueryAdapter.cs">
+      <Link>DelegateQueryAdapter.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DelegateCrudAdapter.cs">
+      <Link>DelegateCrudAdapter.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DataStore.cs">
+      <Link>DataStore.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DataQuery.cs">
+      <Link>DataQuery.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DataContextBase.cs">
+      <Link>DataContextBase.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\Extensions.cs">
+      <Link>Extensions.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\ICommand.cs">
+      <Link>ICommand.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\Command.cs">
+      <Link>Command.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\IDataCommand.cs">
+      <Link>IDataCommand.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DataQueryContextBase.cs">
+      <Link>DataQueryContextBase.cs</Link>
+    </Compile>
+    <Compile Include="..\CrudDatastore\DataStoreContextBase.cs">
+      <Link>DataStoreContextBase.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <PackageReference Include="System.Reflection" Version="4.3.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,30 @@
+﻿<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>CrudDatastore.EntityFramework</id>
+    <version>1.0.3.0</version>
+    <authors>Tyrone Roson</authors>
+    <owners>tyronevergil</owners>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/tyronevergil/CrudDatastore</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>CrudDatastore EntityFramework Boilerplate</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright © 2017 Tyrone Roson</copyright>
+    <tags>crud data datastore</tags>
+    <dependencies>
+      <group targetFramework="net45">
+        <dependency id="CrudDatastore" version="1.1.3.0" />
+        <dependency id="EntityFramework" version="6.0.0" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="content\Person.cs.pp" target="content\Entities" />
+    <file src="content\Identification.cs.pp" target="content\Entities" />
+    <file src="content\PersonSpecs.cs.pp" target="content\Specifications" />
+    <file src="content\DataContext.cs.pp" target="content" />
+    <file src="content\UnitOfWorkEf.cs.pp" target="content" />
+    <file src="content\UnitOfWorkInMemory.cs.pp" target="content" />
+  </files>  
+</package>
