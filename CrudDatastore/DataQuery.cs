@@ -131,7 +131,7 @@ namespace CrudDatastore
             var queryableElements = _dataSource();
             var modifiedExpressionTree = new DataQueryableExpressionTreeModifier(queryableElements).CopyAndModify(expression);
 
-            var isEnumerable = typeof(IEnumerable).IsAssignableFrom(typeof(TResult));
+            var isEnumerable = Type.GetTypeCode(typeof(TResult)) != TypeCode.String && typeof(IEnumerable).IsAssignableFrom(typeof(TResult));
             if (isEnumerable)
             {
                 if (_materializeObject != null)
