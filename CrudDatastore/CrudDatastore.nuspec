@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>CrudDatastore</id>
-    <version>1.1.4.0</version>
+    <version>1.2.0.0</version>
     <authors>Tyrone Roson</authors>
     <owners>tyronevergil</owners>
     <license type="expression">MIT</license>

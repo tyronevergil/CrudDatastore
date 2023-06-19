@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrudDatastore.NetStandard20", "CrudDatastore.NetStandard20\CrudDatastore.NetStandard20.csproj", "{986F3CFC-76CE-4B20-BCB0-70762CAC0AB5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrudDatastore.NetStandard20", "CrudDatastore.NetStandard20\CrudDatastore.NetStandard20.csproj", "{986F3CFC-76CE-4B20-BCB0-70762CAC0AB5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrudDatastore.Net45", "CrudDatastore.Net45\CrudDatastore.Net45.csproj", "{025F88AB-F349-4A8A-ABB5-2C71F4B1DBA2}"
 EndProject
@@ -10,14 +10,22 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrudDatastore.Net45.Test", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CrudDatastore", "CrudDatastore", "{E4DFC841-F73F-42A4-8391-B5C94FBE8FD6}"
 	ProjectSection(SolutionItems) = preProject
+		CrudDatastore\AssemblyInfo.cs = CrudDatastore\AssemblyInfo.cs
+		CrudDatastore\Command.cs = CrudDatastore\Command.cs
+		CrudDatastore\CrudDatastore.EntityFramework.nuspec = CrudDatastore\CrudDatastore.EntityFramework.nuspec
 		CrudDatastore\CrudDatastore.nuspec = CrudDatastore\CrudDatastore.nuspec
 		CrudDatastore\DataContextBase.cs = CrudDatastore\DataContextBase.cs
 		CrudDatastore\DataQuery.cs = CrudDatastore\DataQuery.cs
+		CrudDatastore\DataQueryContextBase.cs = CrudDatastore\DataQueryContextBase.cs
 		CrudDatastore\DataStore.cs = CrudDatastore\DataStore.cs
+		CrudDatastore\DataStoreContextBase.cs = CrudDatastore\DataStoreContextBase.cs
 		CrudDatastore\DelegateCrudAdapter.cs = CrudDatastore\DelegateCrudAdapter.cs
 		CrudDatastore\DelegateQueryAdapter.cs = CrudDatastore\DelegateQueryAdapter.cs
 		CrudDatastore\EntityBase.cs = CrudDatastore\EntityBase.cs
+		CrudDatastore\Extensions.cs = CrudDatastore\Extensions.cs
+		CrudDatastore\ICommand.cs = CrudDatastore\ICommand.cs
 		CrudDatastore\ICrud.cs = CrudDatastore\ICrud.cs
+		CrudDatastore\IDataCommand.cs = CrudDatastore\IDataCommand.cs
 		CrudDatastore\IDataContext.cs = CrudDatastore\IDataContext.cs
 		CrudDatastore\IDataQuery.cs = CrudDatastore\IDataQuery.cs
 		CrudDatastore\IDataStore.cs = CrudDatastore\IDataStore.cs
@@ -26,14 +34,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CrudDatastore", "CrudDatast
 		CrudDatastore\IUnitOfWork.cs = CrudDatastore\IUnitOfWork.cs
 		CrudDatastore\Specification.cs = CrudDatastore\Specification.cs
 		CrudDatastore\UnitOfWorkBase.cs = CrudDatastore\UnitOfWorkBase.cs
-		CrudDatastore\Extensions.cs = CrudDatastore\Extensions.cs
-		CrudDatastore\AssemblyInfo.cs = CrudDatastore\AssemblyInfo.cs
-		CrudDatastore\CrudDatastore.EntityFramework.nuspec = CrudDatastore\CrudDatastore.EntityFramework.nuspec
-		CrudDatastore\ICommand.cs = CrudDatastore\ICommand.cs
-		CrudDatastore\Command.cs = CrudDatastore\Command.cs
-		CrudDatastore\IDataCommand.cs = CrudDatastore\IDataCommand.cs
-		CrudDatastore\DataQueryContextBase.cs = CrudDatastore\DataQueryContextBase.cs
-		CrudDatastore\DataStoreContextBase.cs = CrudDatastore\DataStoreContextBase.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{ED9EE643-5486-4177-A268-787BDE999672}"
@@ -46,21 +46,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{ED9E
 		CrudDatastore\content\UnitOfWorkInMemory.cs.pp = CrudDatastore\content\UnitOfWorkInMemory.cs.pp
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrudDatastore.NetStandard20.Test", "CrudDatastore.NetStandard20.Test\CrudDatastore.NetStandard20.Test.csproj", "{2D5179FA-A6E2-45E5-B45E-319C42FE8687}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrudDatastore.NetStandard20.Test", "CrudDatastore.NetStandard20.Test\CrudDatastore.NetStandard20.Test.csproj", "{2D5179FA-A6E2-45E5-B45E-319C42FE8687}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{9CAC1585-B243-4915-9B08-4CC2F0BDDA78}"
 	ProjectSection(SolutionItems) = preProject
+		CrudDatastore\test\DataContextTest.cs = CrudDatastore\test\DataContextTest.cs
 		CrudDatastore\test\Identification.cs = CrudDatastore\test\Identification.cs
 		CrudDatastore\test\Person.cs = CrudDatastore\test\Person.cs
 		CrudDatastore\test\PersonSpecs.cs = CrudDatastore\test\PersonSpecs.cs
 		CrudDatastore\test\UnitOfWorkInMemory.cs = CrudDatastore\test\UnitOfWorkInMemory.cs
-		CrudDatastore\test\DataContextTest.cs = CrudDatastore\test\DataContextTest.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{86FE9829-DF99-4A2A-8444-071664BC5CFD}"
 	ProjectSection(SolutionItems) = preProject
-		README.md = README.md
+		build.bat = build.bat
 		LICENSE = LICENSE
+		README.md = README.md
 	EndProjectSection
 EndProject
 Global
