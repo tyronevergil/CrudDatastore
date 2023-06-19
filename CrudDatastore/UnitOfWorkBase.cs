@@ -240,7 +240,7 @@ namespace CrudDatastore
 
                     foreach (var p in properties)
                     {
-                        var value = p.Value;
+                        var value = p.Value["value"];
 
                         var parentProp = parentType.GetProperty(p.Key);
                         if (parentProp != null)
@@ -248,8 +248,8 @@ namespace CrudDatastore
                             value = parentProp.GetValue(parent);
                         }
 
-                        var prop = entityType.GetProperty(p.Key);
-                        prop.SetValue(obj, value, null);
+                        var memberProp = entityType.GetProperty(p.Value["comparison"].ToString());
+                        memberProp.SetValue(obj, value, null);
                     }
 
                     var keyTypes = Tuple.Create(parentType, entityType);
@@ -512,23 +512,29 @@ namespace CrudDatastore
             }
 
             var entityType = typeof(T);
-            var obj = Activator.CreateInstance(ProxyBuilder.CreateProxyType(entityType), new[] { new Interceptor((executeBaseMethod, method, proxy, parameters) =>
+            var obj = Activator.CreateInstance(ProxyBuilder.CreateProxyType(entityType), new[] { new Interceptor(new Dictionary<string, object>(),
+                (props, method, proxy, parameters) =>
                 {
+                    var propName = method.Name.Replace("set_", "").Replace("get_", "");
+
                     var propType = method.ReturnType;
                     if (propType == typeof(void))
                     {
-                        executeBaseMethod();
+                        if (!props.ContainsKey(propName))
+                        {
+                            props.Add(propName, parameters[0]);
+                        }
+                        else
+                        {
+                            props[propName] = parameters[0];
+                        }
                     }
                     else
                     {
-                        var value = executeBaseMethod();
-
-                        if (value == null)
+                        if (!props.ContainsKey(propName))
                         {
-                            var propName = method.Name.Replace("get_", "");
                             var prop = entry.GetType().GetProperty(propName);
-
-                            value = prop.GetValue(entry, null);
+                            var value = prop.GetValue(entry, null);
                             if (value == null)
                             {
                                 if (propType.IsValueType)
@@ -543,9 +549,14 @@ namespace CrudDatastore
                                 if (value != null)
                                     proxy.GetType().GetProperty(propName).SetValue(proxy, value, null);
                             }
+
+                            if (!props.ContainsKey(propName))
+                            {
+                                props.Add(propName, value);
+                            }
                         }
 
-                        return value;
+                        return props[propName];
                     }
 
                     return null;
@@ -588,7 +599,8 @@ namespace CrudDatastore
                 var entityType = GetEntityType(entity);
                 foreach (var prop in entityType.GetProperties().Where(p => typeof(EntityBase).IsAssignableFrom(p.PropertyType) || (p.PropertyType.IsGenericType && typeof(EntityBase).IsAssignableFrom(p.PropertyType.GetGenericArguments().First()))))
                 {
-                    var propType = prop.GetValue(entity).GetType();
+                    var propValue = prop.GetValue(entity);
+                    var propType = propValue != null ? propValue.GetType() : prop.PropertyType;
                     if (!(typeof(IEntityProxy).IsAssignableFrom(propType) || typeof(IEntityCollection).IsAssignableFrom(propType)))
                     {
                         if (_dataMapping.ContainsKey(prop))
@@ -605,10 +617,21 @@ namespace CrudDatastore
 
                                 if (prop.PropertyType.IsGenericType)
                                 {
-                                    var collection = prop.GetValue(entity) as IEnumerable;
-                                    if (collection != null)
+                                    var entityPropCollection = propValue as IEnumerable;
+                                    var entryPropCollection = (prop.GetValue(entry) ?? GetRelatedPropertyValue(entry, prop)) as IEnumerable;
+
+                                    if (entryPropCollection != null && (entityPropCollection == null || (entityPropCollection != null && entityPropCollection != entryPropCollection)))
                                     {
-                                        foreach (var item in collection)
+                                        var markDeleted = typeof(UnitOfWorkBase).GetMethod("MarkDeleted");
+                                        foreach (var item in entryPropCollection)
+                                        {
+                                            markDeleted.MakeGenericMethod(new[] { relatedEntityType }).Invoke(this, new[] { item });
+                                        }
+                                    }
+
+                                    if (entityPropCollection != null)
+                                    {
+                                        foreach (var item in entityPropCollection)
                                         {
                                             markNew.DynamicInvoke(item);
                                         }
@@ -955,9 +978,9 @@ namespace CrudDatastore
     internal class ConstantPropertiesVisitor<T> : ExpressionVisitor where T : EntityBase
     {
         private readonly Stack _pathToValue = new Stack();
-        private readonly IDictionary<string, object> _properties = new Dictionary<string, object>();
+        private readonly IDictionary<string, IDictionary<string, object>> _properties = new Dictionary<string, IDictionary<string, object>>();
 
-        public static IDictionary<string, object> GetProperties(Expression expression)
+        public static IDictionary<string, IDictionary<string, object>> GetProperties(Expression expression)
         {
             var visitor = new ConstantPropertiesVisitor<T>();
             visitor.Visit(expression);
@@ -968,7 +991,7 @@ namespace CrudDatastore
         {
         }
 
-        private IDictionary<string, object> GetProperties()
+        private IDictionary<string, IDictionary<string, object>> GetProperties()
         {
             return _properties;
         }
@@ -984,71 +1007,71 @@ namespace CrudDatastore
 
         protected override Expression VisitConstant(ConstantExpression node)
         {
-            var parentExpression = _pathToValue.ToArray().FirstOrDefault(e =>
+            var pathArray = _pathToValue.ToArray();
+            var parentMemberExpression = pathArray.FirstOrDefault(e =>
             {
                 var expression = ((Expression)e);
                 if (expression.NodeType == ExpressionType.MemberAccess)
                 {
-                    return true;
-                }
-                else
-                {
-                    if (expression is BinaryExpression binary)
+                    var memberExpression = ((MemberExpression)expression);
+                    if (memberExpression.Member is PropertyInfo && memberExpression.Expression is ConstantExpression)
                     {
-                        if (binary.Left is MemberExpression || binary.Right is MemberExpression)
-                        {
-                            return true;
-                        }
-
-                        if (binary.Left is UnaryExpression || binary.Right is UnaryExpression)
-                        {
-                            var unary = (UnaryExpression)(binary.Left is UnaryExpression ? binary.Left : binary.Right);
-                            if (unary.Operand.NodeType == ExpressionType.MemberAccess)
-                            {
-                                return true;
-                            }
-                        }
+                        return memberExpression.Expression.Type != typeof(T);
                     }
                 }
 
                 return false;
             });
 
-            if (parentExpression != null)
+            if (parentMemberExpression != null)
             {
-                var prop = string.Empty;
-                var value = default(object);
+                var memberExpression = (MemberExpression)parentMemberExpression;
+                var propertyInfo = (PropertyInfo)memberExpression.Member;
 
-                if (parentExpression is MemberExpression)
+                var prop = memberExpression.Member.Name;
+                var value = propertyInfo.GetValue(node.Value, null); ;
+
+                var comparisonExpression = pathArray.FirstOrDefault(e =>
                 {
-                    var expression = (MemberExpression)parentExpression;
-                    var fi = (PropertyInfo)expression.Member;
+                    var expression = ((Expression)e);
+                    if (expression is BinaryExpression binary)
+                    {
+                        var memberLeft = binary.Left as MemberExpression;
+                        if (memberLeft != null && memberLeft.Member is PropertyInfo)
+                        {
+                            if (memberLeft == parentMemberExpression)
+                            {
+                                return true;
+                            }
+                        }
 
-                    value = fi.GetValue(node.Value, null);
-                    prop = expression.Member.Name;
-                }
-                else
+                        var memberRight = binary.Right as MemberExpression;
+                        if (memberRight != null && memberRight.Member is PropertyInfo)
+                        {
+                            if (memberRight == parentMemberExpression)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+
+                    return false;
+                });
+
+                if (comparisonExpression != null)
                 {
-                    var binary = (BinaryExpression)parentExpression;
-                    if (binary.Left is MemberExpression || binary.Right is MemberExpression)
-                    {
-                        var expression = (MemberExpression)(binary.Left is MemberExpression ? binary.Left : binary.Right);
+                    var binaryExpression = (BinaryExpression)comparisonExpression;
+                    var comparisonMemberExpression = (binaryExpression.Left == parentMemberExpression ? binaryExpression.Right : binaryExpression.Left) as MemberExpression;
 
-                        value = node.Value;
-                        prop = expression.Member.Name;
-                    }
-                    else
+                    if (comparisonMemberExpression != null)
                     {
-                        var operand = ((UnaryExpression)(binary.Left is UnaryExpression ? binary.Left : binary.Right)).Operand;
-                        var expression = (MemberExpression)operand;
+                        var propValues = new Dictionary<string, object>();
+                        propValues.Add("value", value);
+                        propValues.Add("comparison", comparisonMemberExpression.Member.Name);
 
-                        value = node.Value;
-                        prop = expression.Member.Name;
+                        _properties.Add(prop, propValues);
                     }
                 }
-
-                if (typeof(T).GetProperty(prop) != null)
-                    _properties.Add(prop, value);
             }
 
             return base.VisitConstant(node);
