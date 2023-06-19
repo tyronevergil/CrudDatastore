@@ -25,7 +25,7 @@ namespace CrudDatastore.Test
             };
 
             var dataStorePerson = new DataStore<Entities.Person>(
-                new DelegateCrudAdapter<Entities.Person>(
+                new DelegateCrudAdapter<Entities.Person>(this,
                     /* createTrigger */
                     (e) =>
                     {
@@ -64,13 +64,7 @@ namespace CrudDatastore.Test
                     /* readExpressionTrigger */
                     (predicate) =>
                     {
-                        var modifiedPredicate = (Expression<Func<Entities.Person, bool>>)
-                            new InterceptNavigationPropertyExpressionTreeModifier((entry, prop) =>
-                            {
-                                return ((IDataNavigation)this).GetNavigationProperty(entry, prop);
-                            })
-                            .CopyAndModify(predicate);
-                        return people.Where(modifiedPredicate.Compile()).AsQueryable();
+                        return people.Where(predicate.Compile()).AsQueryable();
                     }
                 )
             );
@@ -125,49 +119,6 @@ namespace CrudDatastore.Test
             this.Register(dataStorePerson)
                 .Map(p => p.Identifications, (p, i) => p.PersonId == i.PersonId);
             this.Register(dataStoreIdentification);
-        }
-    }
-
-    internal class InterceptNavigationPropertyExpressionTreeModifier : ExpressionVisitor
-    {
-        private readonly Func<object, string, object> _intercept;
-        private ParameterExpression _param;
-
-        public InterceptNavigationPropertyExpressionTreeModifier(Func<object, string, object> intercept)
-        {
-            _intercept = intercept;
-        }
-
-        public Expression CopyAndModify(Expression expression)
-        {
-            var lambda = expression as LambdaExpression;
-            if (lambda != null)
-            {
-                _param = lambda.Parameters.First();
-            }
-
-            return this.Visit(expression);
-        }
-
-        protected override Expression VisitMethodCall(MethodCallExpression node)
-        {
-            var prop = node.Arguments.First() as MemberExpression;
-            if (_param != null && _param.Type == prop.Member.ReflectedType)
-            {
-                var paramConverted = Expression.Convert(_param, typeof(object));
-                var propName = Expression.Constant(prop.Member.Name);
-
-                var interceptExpressionCall = _intercept.Target == null ?
-                    Expression.Call(_intercept.Method, paramConverted, propName) :
-                    Expression.Call(Expression.Constant(_intercept.Target), _intercept.Method, paramConverted, propName);
-                var interceptExpressionConverted = Expression.Convert(interceptExpressionCall, prop.Type);
-
-                var expressionCall = Expression.Call(node.Method, (new[] { interceptExpressionConverted }).Union(node.Arguments.Skip(1)).ToArray());
-
-                return expressionCall;
-            }
-
-            return base.VisitMethodCall(node);
         }
     }
 }
