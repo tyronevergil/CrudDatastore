@@ -83,5 +83,16 @@ namespace CrudDatastore.Test
                 Assert.IsTrue(people.Count() == 3);
             }
         }
+
+        [Test()]
+        public void FindNumberAction()
+        {
+            using (var context = DataContext.Factory())
+            {
+                var people = context.Find(Specifications.PersonSpecs.Get("92–4267"));
+
+                Assert.IsTrue(people.Count() == 1);
+            }
+        }
     }
 }

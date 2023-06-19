@@ -49,6 +49,8 @@ namespace $rootnamespace$
         private InMemoryCrudAdapter(IList<T> source, string key, bool isIdentity)
             : base
             (
+                this,
+
                 /* create */
                 (e) =>
                 {
