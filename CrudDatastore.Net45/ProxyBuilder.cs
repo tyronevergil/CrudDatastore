@@ -19,49 +19,66 @@ namespace CrudDatastore
 
     internal class Interceptor : IIntercept
     {
-        private readonly Func<Func<object>, MethodInfo, object, object[], object> _intercept;
+        private readonly IDictionary<string, object> _props;
+        private readonly Func<IDictionary<string, object>, MethodInfo, object, object[], object> _intercept;
 
-        public Interceptor(Func<Func<object>, MethodInfo, object, object[], object> intercept)
+        public Interceptor(IDictionary<string, object> props, Func<IDictionary<string, object>, MethodInfo, object, object[], object> intercept)
         {
+            _props = props;
             _intercept = intercept;
         }
 
         public object Intercept(MethodInfo method, object proxy, params object[] args)
         {
-            return _intercept(() => ExecuteBaseMethod(method, proxy, args), method, proxy, args);
-        }
-
-        protected static object ExecuteBaseMethod(MethodInfo method, object proxy, params object[] args)
-        {
-            var proxyType = proxy.GetType();
-
-            var parameterInfos = method.GetParameters();
-
-            var returnType = method.ReturnType;
-            var parameterTypes = (new[] { method.ReflectedType }).Concat(parameterInfos.Select(p => p.ParameterType)).ToArray();
-
-            var dm = new DynamicMethod("__base", returnType, parameterTypes, proxyType);
-
-            // generate IL instructions
-            ILGenerator gen = dm.GetILGenerator();
-            gen.Emit(OpCodes.Ldarg_0);
-
-            foreach (var p in parameterInfos)
-            {
-                gen.Emit(OpCodes.Ldarg_S, p.Position + 1);
-            }
-
-            gen.Emit(OpCodes.Call, method);
-            gen.Emit(OpCodes.Ret);
-
-            // create delegate to invoke the base method
-            var delMethod = dm.CreateDelegate(Expression.GetDelegateType(parameterTypes.Concat(new[] { returnType }).ToArray()));
-            var delArgs = (new[] { proxy }).Concat(args ?? Enumerable.Empty<object>()).ToArray();
-            var delRet = delMethod.DynamicInvoke(delArgs);
-
-            return delRet;
+            return _intercept(_props, method, proxy, args);
         }
     }
+
+    //internal class Interceptor : IIntercept
+    //{
+    //    private readonly Func<Func<object>, MethodInfo, object, object[], object> _intercept;
+
+    //    public Interceptor(Func<Func<object>, MethodInfo, object, object[], object> intercept)
+    //    {
+    //        _intercept = intercept;
+    //    }
+
+    //    public object Intercept(MethodInfo method, object proxy, params object[] args)
+    //    {
+    //        return _intercept(() => ExecuteBaseMethod(method, proxy, args), method, proxy, args);
+    //    }
+
+    //    protected static object ExecuteBaseMethod(MethodInfo method, object proxy, params object[] args)
+    //    {
+    //        var proxyType = proxy.GetType();
+
+    //        var parameterInfos = method.GetParameters();
+
+    //        var returnType = method.ReturnType;
+    //        var parameterTypes = (new[] { method.ReflectedType }).Concat(parameterInfos.Select(p => p.ParameterType)).ToArray();
+
+    //        var dm = new DynamicMethod("__base", returnType, parameterTypes, proxyType);
+
+    //        // generate IL instructions
+    //        ILGenerator gen = dm.GetILGenerator();
+    //        gen.Emit(OpCodes.Ldarg_0);
+
+    //        foreach (var p in parameterInfos)
+    //        {
+    //            gen.Emit(OpCodes.Ldarg_S, p.Position + 1);
+    //        }
+
+    //        gen.Emit(OpCodes.Call, method);
+    //        gen.Emit(OpCodes.Ret);
+
+    //        // create delegate to invoke the base method
+    //        var delMethod = dm.CreateDelegate(Expression.GetDelegateType(parameterTypes.Concat(new[] { returnType }).ToArray()));
+    //        var delArgs = (new[] { proxy }).Concat(args ?? Enumerable.Empty<object>()).ToArray();
+    //        var delRet = delMethod.DynamicInvoke(delArgs);
+
+    //        return delRet;
+    //    }
+    //}
 
     internal sealed class ProxyBuilder
     {

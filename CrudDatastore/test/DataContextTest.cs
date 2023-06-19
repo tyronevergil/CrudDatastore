@@ -60,6 +60,52 @@ namespace CrudDatastore.Test
         }
 
         [Test()]
+        public void UpdateDeleteChildrenAction()
+        {
+            using (var context = DataContext.Factory())
+            {
+                var person = context.FindSingle(Specifications.PersonSpecs.Get(1));
+                person.Firstname = "Rudolf";
+
+                //var identifications = person.Identifications;
+
+                person.Identifications = null;
+
+                context.Update(person);
+                context.SaveChanges();
+
+                Assert.IsTrue(context.FindSingle(Specifications.PersonSpecs.Get(person.PersonId)).Firstname == "Rudolf");
+                Assert.IsTrue(context.FindSingle(Specifications.PersonSpecs.Get(person.PersonId)).Identifications.Count == 0);
+            }
+        }
+
+        [Test()]
+        public void UpdateReplaceChildrenAction()
+        {
+            using (var context = DataContext.Factory())
+            {
+                var person = context.FindSingle(Specifications.PersonSpecs.Get(1));
+                person.Firstname = "Rudolf";
+
+                person.Identifications = new List<Entities.Identification>
+                    {
+                        new Entities.Identification
+                        {
+                            Type = Entities.Identification.Types.SSN,
+                            Number = "444-222-2222"
+                        }
+                    };
+
+                context.Update(person);
+                context.SaveChanges();
+
+                Assert.IsTrue(context.FindSingle(Specifications.PersonSpecs.Get(person.PersonId)).Firstname == "Rudolf");
+                Assert.IsTrue(context.FindSingle(Specifications.PersonSpecs.Get(person.PersonId)).Identifications.Count == 1);
+                Assert.IsTrue(context.FindSingle(Specifications.PersonSpecs.Get(person.PersonId)).Identifications.First().Number == "444-222-2222");
+            }
+        }
+
+        [Test()]
         public void DeleteAction()
         {
             using (var context = DataContext.Factory())
