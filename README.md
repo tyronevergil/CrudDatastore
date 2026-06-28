@@ -1,36 +1,139 @@
-# CrudDatastore
+# CrudDatastore - Simple Data Access Framework
 
-CrudDatastore is a lightweight ORM-style data access library built around CRUD operations, specifications, and unit-of-work patterns.
+CrudDatastore is a data access framework that uses the Specification pattern to query data with LINQ expressions or command/parameter execution.
 
-## Packages
+It provides `DataQuery` and `DataStore` as simple query and CRUD entry points.
 
-The v2 public packaging scaffold currently produces target-specific artifacts for:
+For richer scenarios, use `DataContextBase` and `UnitOfWorkBase` as a data context and unit-of-work foundation with relational mapping support.
+
+## Installation
+
+Use NuGet to install the package:
+
+```powershell
+PM> Install-Package CrudDatastore -Version 2.0.0-preview.1
+```
+
+Or with dotnet CLI:
+
+```bash
+dotnet add package CrudDatastore --version 2.0.0-preview.1
+```
+
+## Target frameworks
+
+`CrudDatastore` currently ships with support for:
 
 - `netstandard2.0`
 - `net481`
 - `net8.0`
 - `net10.0`
 
-## Core concepts
+## DataQuery
 
-- `DataQuery` for read/query operations
-- `DataStore` for CRUD operations
-- `Specification<T>` for query composition
-- `DataContextBase` and `UnitOfWorkBase` for richer data-context patterns
+`DataQuery` is focused on read/query operations using specifications.
 
-## Repository split
+**Usage**
 
-The public `CrudDatastore` repository is intended to contain only the ORM library and release assets.
+```csharp
+var dataQuery = new DataQuery<Person>(new DelegateQueryAdapter<Person>(
+    predicate => people.Where(predicate.Compile()).AsQueryable(),
+    (command, parameters) => people.AsQueryable()
+));
 
-Internal tests and the temporary Blazor harness are planned for separate private repositories:
+var person = dataQuery.FindSingle(PersonSpecs.GetById(1));
+var allPeople = dataQuery.Find(PersonSpecs.GetAll()).ToList();
+```
 
-- `CrudDatastore.Private`
-- `CrudDatastore.BlazorHarness`
+Specification example:
 
-## Release
+```csharp
+public class PersonSpecs : Specification<Person>
+{
+    private PersonSpecs(Expression<Func<Person, bool>> predicate) : base(predicate) { }
 
-The public repo is designed to publish NuGet packages from GitHub Actions on version tags.
+    public static PersonSpecs GetById(int id) => new PersonSpecs(p => p.PersonId == id);
+    public static PersonSpecs GetAll() => new PersonSpecs(p => true);
+}
+```
 
-## Status
+## DataStore
 
-Current v2 public solution is `CrudDatastore.sln`.
+`DataStore` provides full CRUD operations.
+
+**Usage**
+
+```csharp
+var dataStore = new DataStore<Person>(new DelegateCrudAdapter<Person>(
+    create: entity => people.Add(entity),
+    update: entity =>
+    {
+        var existing = people.FirstOrDefault(p => p.PersonId == entity.PersonId);
+        if (existing != null)
+        {
+            existing.Firstname = entity.Firstname;
+            existing.Lastname = entity.Lastname;
+        }
+    },
+    delete: entity =>
+    {
+        var existing = people.FirstOrDefault(p => p.PersonId == entity.PersonId);
+        if (existing != null)
+            people.Remove(existing);
+    },
+    read: predicate => people.Where(predicate.Compile()).AsQueryable()
+));
+
+// create
+var person = new Person { PersonId = 10, Firstname = "Adam", Lastname = "Sanchez" };
+dataStore.Add(person);
+
+// update
+person.Firstname = "Eve";
+dataStore.Update(person);
+
+// delete
+dataStore.Delete(person);
+```
+
+## DataContextBase / UnitOfWorkBase
+
+Use `DataContextBase` and `UnitOfWorkBase` when you need a context-oriented unit-of-work flow.
+
+**Usage**
+
+```csharp
+using (var context = DataContext.Factory())
+{
+    var person = new Person
+    {
+        Firstname = "Pauline",
+        Lastname = "Koch"
+    };
+
+    context.Add(person);
+    context.SaveChanges();
+}
+
+using (var context = DataContext.Factory())
+{
+    var person = context.FindSingle(PersonSpecs.GetById(1));
+    if (person != null)
+    {
+        person.Firstname = "Paul";
+        context.SaveChanges();
+    }
+}
+
+using (var context = DataContext.Factory())
+{
+    var person = context.FindSingle(PersonSpecs.GetById(2));
+    if (person != null)
+    {
+        context.Delete(person);
+        context.SaveChanges();
+    }
+}
+```
+
+Happy Coding!
