@@ -20,15 +20,6 @@ Or with dotnet CLI:
 dotnet add package CrudDatastore --version 2.0.0-preview.1
 ```
 
-## Target frameworks
-
-`CrudDatastore` currently ships with support for:
-
-- `netstandard2.0`
-- `net481`
-- `net8.0`
-- `net10.0`
-
 ## DataQuery
 
 `DataQuery` is focused on read/query operations using specifications.
