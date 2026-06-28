@@ -6,15 +6,15 @@
     <LangVersion>latest</LangVersion>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <IsPackable>true</IsPackable>
-    <Authors>Tyrone Vergil</Authors>
-    <Company>Tyrone Vergil</Company>
+    <Authors>Tyrone Roson</Authors>
+    <Company>Tyrone Roson</Company>
     <Product>CrudDatastore</Product>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/tyronevergil/CrudDatastore</RepositoryUrl>
     <PackageProjectUrl>https://github.com/tyronevergil/CrudDatastore</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <PackageTags>orm;crud;repository;unit-of-work;specification</PackageTags>
-    <Description>CrudDatastore ORM library.</Description>
+    <PackageTags>orm;crud;repository;data;datastore</PackageTags>
+    <Description>Simple Data Access Framework</Description>
     <Version>2.0.0-preview.1</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

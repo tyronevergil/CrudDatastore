@@ -1,13 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="../CrudDatastore.Core/CrudDatastore.Core.props" />
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>CrudDatastore</AssemblyName>
     <RootNamespace>CrudDatastore</RootNamespace>
     <PackageId>CrudDatastore</PackageId>
-    <Description>CrudDatastore package for netstandard2.0.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,6 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../../CrudDatastore/*.cs" Exclude="../../CrudDatastore/AssemblyInfo.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../../CrudDatastore/Internal/*.cs" Link="Internal/%(Filename)%(Extension)" />
     <Compile Include="../../CrudDatastore/Foundation/*.cs" Link="Foundation/%(Filename)%(Extension)" />
     <Compile Include="../../CrudDatastore/Framework/*.cs" Link="Framework/%(Filename)%(Extension)" />
     <Compile Include="../../CrudDatastore/Framework/Internal/*.cs" Link="Framework/Internal/%(Filename)%(Extension)" />

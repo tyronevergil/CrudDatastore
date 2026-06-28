@@ -1,6 +1,0 @@
-<Project>
-  <ItemGroup>
-    <Compile Include="../../CrudDatastore/*.cs" Exclude="../../CrudDatastore/AssemblyInfo.cs" Link="%(Filename)%(Extension)" />
-    <Compile Include="../../CrudDatastore/Internal/*.cs" Link="Internal/%(Filename)%(Extension)" />
-  </ItemGroup>
-</Project>
