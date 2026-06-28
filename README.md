@@ -94,6 +94,7 @@ Use `DataContextBase` and `UnitOfWorkBase` when you need a context-oriented unit
 **Usage**
 
 ```csharp
+// create
 using (var context = DataContext.Factory())
 {
     var person = new Person
@@ -106,6 +107,7 @@ using (var context = DataContext.Factory())
     context.SaveChanges();
 }
 
+// update
 using (var context = DataContext.Factory())
 {
     var person = context.FindSingle(PersonSpecs.GetById(1));
@@ -116,6 +118,7 @@ using (var context = DataContext.Factory())
     }
 }
 
+// delete
 using (var context = DataContext.Factory())
 {
     var person = context.FindSingle(PersonSpecs.GetById(2));
