@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net481;net8.0;net10.0</TargetFrameworks>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>CrudDatastore</AssemblyName>
+    <RootNamespace>CrudDatastore</RootNamespace>
+    <PackageId>CrudDatastore</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net481" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../CrudDatastore/*.cs" Exclude="../CrudDatastore/AssemblyInfo.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../CrudDatastore/Internal/*.cs" Link="Internal/%(Filename)%(Extension)" />
+    <Compile Include="../CrudDatastore/Foundation/*.cs" Link="Foundation/%(Filename)%(Extension)" />
+    <Compile Include="../CrudDatastore/Framework/*.cs" Link="Framework/%(Filename)%(Extension)" />
+    <Compile Include="../CrudDatastore/Framework/Internal/*.cs" Link="Framework/Internal/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>
