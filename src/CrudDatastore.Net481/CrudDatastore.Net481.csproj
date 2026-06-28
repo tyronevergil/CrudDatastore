@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="../CrudDatastore.Core/CrudDatastore.Core.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net481</TargetFramework>
+    <AssemblyName>CrudDatastore</AssemblyName>
+    <RootNamespace>CrudDatastore</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <Description>CrudDatastore framework package for net481.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net481" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../../CrudDatastore/Foundation/*.cs" Link="Foundation/%(Filename)%(Extension)" />
+    <Compile Include="../../CrudDatastore/Framework/*.cs" Link="Framework/%(Filename)%(Extension)" />
+    <Compile Include="../../CrudDatastore/Framework/Internal/*.cs" Link="Framework/Internal/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

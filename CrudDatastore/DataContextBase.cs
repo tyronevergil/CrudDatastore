@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CrudDatastore
 {
@@ -11,10 +12,10 @@ namespace CrudDatastore
         public DataContextBase(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
-            _unitOfWork.EntityMaterialized += (sender, e) => OnEntityMaterialized(e.Entity);
-            _unitOfWork.EntityCreate += (sender, e) => OnEntityCreate(e.Entity);
-            _unitOfWork.EntityUpdate += (sender, e) => OnEntityUpdate(e.Entity);
-            _unitOfWork.EntityDelete += (sender, e) => OnEntityDelete(e.Entity);
+            _unitOfWork.EntityMaterialized += (sender, args) => OnEntityMaterialized(args.Entity);
+            _unitOfWork.EntityCreate += (sender, args) => OnEntityCreate(args.Entity);
+            _unitOfWork.EntityUpdate += (sender, args) => OnEntityUpdate(args.Entity);
+            _unitOfWork.EntityDelete += (sender, args) => OnEntityDelete(args.Entity);
         }
 
         protected virtual void OnEntityMaterialized(object entity)
@@ -38,9 +39,19 @@ namespace CrudDatastore
             return _unitOfWork.Read<T>().Find(specification);
         }
 
+        public virtual Task<IQueryable<T>> FindAsync<T>(ISpecification<T> specification) where T : EntityBase
+        {
+            return _unitOfWork.Read<T>().FindAsync(specification);
+        }
+
         public virtual T FindSingle<T>(ISpecification<T> specification) where T : EntityBase
         {
             return _unitOfWork.Read<T>().FindSingle(specification);
+        }
+
+        public virtual Task<T> FindSingleAsync<T>(ISpecification<T> specification) where T : EntityBase
+        {
+            return _unitOfWork.Read<T>().FindSingleAsync(specification);
         }
 
         public virtual void Add<T>(T entity) where T : EntityBase
@@ -48,9 +59,19 @@ namespace CrudDatastore
             _unitOfWork.MarkNew(entity);
         }
 
+        public virtual Task AddAsync<T>(T entity) where T : EntityBase
+        {
+            return _unitOfWork.MarkNewAsync(entity);
+        }
+
         public virtual void Update<T>(T entity) where T : EntityBase
         {
             _unitOfWork.MarkModified(entity);
+        }
+
+        public virtual Task UpdateAsync<T>(T entity) where T : EntityBase
+        {
+            return _unitOfWork.MarkModifiedAsync(entity);
         }
 
         public virtual void Delete<T>(T entity) where T : EntityBase
@@ -58,19 +79,19 @@ namespace CrudDatastore
             _unitOfWork.MarkDeleted(entity);
         }
 
+        public virtual Task DeleteAsync<T>(T entity) where T : EntityBase
+        {
+            return _unitOfWork.MarkDeletedAsync(entity);
+        }
+
         public virtual void SaveChanges()
         {
             _unitOfWork.Commit();
         }
 
-        public virtual void Execute(ICommand command)
+        public virtual Task SaveChangesAsync()
         {
-            command.SatisfyingFrom(_unitOfWork);
-        }
-
-        protected IEntityEntry Entry(object entity)
-        {
-            return new EntityEntryModifier(entity, _unitOfWork);
+            return _unitOfWork.CommitAsync();
         }
 
         protected virtual void Dispose(bool disposing)
@@ -90,7 +111,7 @@ namespace CrudDatastore
             }
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -99,46 +120,6 @@ namespace CrudDatastore
         ~DataContextBase()
         {
             Dispose(false);
-        }
-    }
-
-    public interface IEntityEntry
-    {
-        void MarkNew();
-        void MarkModified();
-        void MarkDeleted();
-    }
-
-    internal class EntityEntryModifier : IEntityEntry
-    {
-        private readonly object _entity;
-        private readonly IUnitOfWork _unitOfWork;
-
-        public EntityEntryModifier(object entity, IUnitOfWork unitOfWork)
-        {
-            _entity = entity;
-            _unitOfWork = unitOfWork;
-        }
-
-        public void MarkNew()
-        {
-            var method = typeof(IUnitOfWork).GetMethod("MarkNew");
-            var genericMethod = method.MakeGenericMethod(_entity.GetType());
-            genericMethod.Invoke(_unitOfWork, new[] { _entity });
-        }
-
-        public void MarkModified()
-        {
-            var method = typeof(IUnitOfWork).GetMethod("MarkModified");
-            var genericMethod = method.MakeGenericMethod(_entity.GetType());
-            genericMethod.Invoke(_unitOfWork, new[] { _entity });
-        }
-
-        public void MarkDeleted()
-        {
-            var method = typeof(IUnitOfWork).GetMethod("MarkDeleted");
-            var genericMethod = method.MakeGenericMethod(_entity.GetType());
-            genericMethod.Invoke(_unitOfWork, new[] { _entity });
         }
     }
 }

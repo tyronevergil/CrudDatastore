@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace CrudDatastore
 {
@@ -7,10 +7,13 @@ namespace CrudDatastore
     {
     }
 
-	public interface IDataStore<T> : IDataQuery<T>, IDataStore where T : EntityBase
-	{
-		void Add(T entity);
-		void Update(T entity);
-		void Delete(T entity);
-	}
+    public interface IDataStore<T> : IDataQuery<T>, IDataStore where T : EntityBase
+    {
+        void Add(T entity);
+        Task AddAsync(T entity);
+        void Update(T entity);
+        Task UpdateAsync(T entity);
+        void Delete(T entity);
+        Task DeleteAsync(T entity);
+    }
 }
