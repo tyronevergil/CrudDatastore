@@ -7,9 +7,10 @@
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <IsPackable>true</IsPackable>
     <Authors>Tyrone Roson</Authors>
-    <Company>Tyrone Roson</Company>
+    <Owners>tyronevergil</Owners>
     <Product>CrudDatastore</Product>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>Copyright © 2017 Tyrone Roson</Copyright>
     <RepositoryUrl>https://github.com/tyronevergil/CrudDatastore</RepositoryUrl>
     <PackageProjectUrl>https://github.com/tyronevergil/CrudDatastore</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
