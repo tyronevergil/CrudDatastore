@@ -15,7 +15,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageTags>orm;crud;repository;unit-of-work;specification</PackageTags>
     <Description>CrudDatastore ORM library.</Description>
-    <Version>2.0.0-preview</Version>
+    <Version>2.0.0-preview.1</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
