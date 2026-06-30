@@ -1,7 +1,6 @@
 ﻿# CrudDatastore
 
-A lightweight datastore and query framework for .NET that uses the Specification pattern
-to query with LINQ expressions or raw command/parameter execution.
+CrudDatastore is a datastore framework for .NET that provides flexible abstractions for querying, CRUD operations, and data access.
 
 [![NuGet](https://img.shields.io/nuget/v/CrudDatastore)](https://www.nuget.org/packages/CrudDatastore)
 

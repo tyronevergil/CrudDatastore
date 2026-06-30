@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36408.4
+# Visual Studio Version 18
+VisualStudioVersion = 18.7.11919.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrudDatastore.NetStandard20", "src\CrudDatastore.NetStandard20\CrudDatastore.NetStandard20.csproj", "{0F574886-57D8-48E1-BF34-208EC1512055}"
 EndProject
@@ -9,6 +9,92 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrudDatastore.Net8", "src\CrudDatastore.Net8\CrudDatastore.Net8.csproj", "{40CAB2C3-80C7-4F9F-92CA-E50B05B09EE7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrudDatastore.Net10", "src\CrudDatastore.Net10\CrudDatastore.Net10.csproj", "{D170A8C3-FEE5-4A57-9EE8-53493CC6F77E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A9904247-B128-4901-9E2A-28CE910A2C32}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuget", "nuget", "{E91A4C6F-7D23-4B8E-9F51-2A6D8C3B7E40}"
+	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
+		src\README.md = src\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CrudDatastore", "CrudDatastore", "{A7F0E6D8-5C3B-4E92-9F14-7B8D2C1A6F53}"
+	ProjectSection(SolutionItems) = preProject
+		CrudDatastore\Action.cs = CrudDatastore\Action.cs
+		CrudDatastore\AssemblyInfo.cs = CrudDatastore\AssemblyInfo.cs
+		CrudDatastore\DataContextBase.cs = CrudDatastore\DataContextBase.cs
+		CrudDatastore\DataQueryExtensions.cs = CrudDatastore\DataQueryExtensions.cs
+		CrudDatastore\EntityBase.cs = CrudDatastore\EntityBase.cs
+		CrudDatastore\EntityEventArgs.cs = CrudDatastore\EntityEventArgs.cs
+		CrudDatastore\IAction.cs = CrudDatastore\IAction.cs
+		CrudDatastore\ICommand.cs = CrudDatastore\ICommand.cs
+		CrudDatastore\ICommandContext.cs = CrudDatastore\ICommandContext.cs
+		CrudDatastore\ICrud.cs = CrudDatastore\ICrud.cs
+		CrudDatastore\IDataContext.cs = CrudDatastore\IDataContext.cs
+		CrudDatastore\IDataQuery.cs = CrudDatastore\IDataQuery.cs
+		CrudDatastore\IDataStore.cs = CrudDatastore\IDataStore.cs
+		CrudDatastore\IQuery.cs = CrudDatastore\IQuery.cs
+		CrudDatastore\IQueryUnit.cs = CrudDatastore\IQueryUnit.cs
+		CrudDatastore\IReadContext.cs = CrudDatastore\IReadContext.cs
+		CrudDatastore\ISpecification.cs = CrudDatastore\ISpecification.cs
+		CrudDatastore\IUnitOfWork.cs = CrudDatastore\IUnitOfWork.cs
+		CrudDatastore\ReadContextBase.cs = CrudDatastore\ReadContextBase.cs
+		CrudDatastore\ReadContextExtensions.cs = CrudDatastore\ReadContextExtensions.cs
+		CrudDatastore\Specification.cs = CrudDatastore\Specification.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Foundation", "Foundation", "{F3D2C9A1-8B74-4E6F-93A5-1D7E8C2B9F60}"
+	ProjectSection(SolutionItems) = preProject
+		CrudDatastore\Foundation\DataQuery.cs = CrudDatastore\Foundation\DataQuery.cs
+		CrudDatastore\Foundation\DataStore.cs = CrudDatastore\Foundation\DataStore.cs
+		CrudDatastore\Foundation\DelegateCrudAdapter.cs = CrudDatastore\Foundation\DelegateCrudAdapter.cs
+		CrudDatastore\Foundation\DelegateQueryAdapter.cs = CrudDatastore\Foundation\DelegateQueryAdapter.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Framework", "Framework", "{6B9E4A21-3D5F-4C88-92E7-8A14F0D6C3B5}"
+	ProjectSection(SolutionItems) = preProject
+		CrudDatastore\Framework\DataQuery.cs = CrudDatastore\Framework\DataQuery.cs
+		CrudDatastore\Framework\DataStore.cs = CrudDatastore\Framework\DataStore.cs
+		CrudDatastore\Framework\DelegateCrudAdapter.cs = CrudDatastore\Framework\DelegateCrudAdapter.cs
+		CrudDatastore\Framework\DelegateQueryAdapter.cs = CrudDatastore\Framework\DelegateQueryAdapter.cs
+		CrudDatastore\Framework\IIntercept.cs = CrudDatastore\Framework\IIntercept.cs
+		CrudDatastore\Framework\InMemoryListExtensions.cs = CrudDatastore\Framework\InMemoryListExtensions.cs
+		CrudDatastore\Framework\IObjectProxy.cs = CrudDatastore\Framework\IObjectProxy.cs
+		CrudDatastore\Framework\IPropertyMap.cs = CrudDatastore\Framework\IPropertyMap.cs
+		CrudDatastore\Framework\QueryUnitBase.cs = CrudDatastore\Framework\QueryUnitBase.cs
+		CrudDatastore\Framework\UnitOfWorkBase.cs = CrudDatastore\Framework\UnitOfWorkBase.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Internal", "Internal", "{8D2B7E41-5F9C-4A36-9E18-3C7F61B0D5A2}"
+	ProjectSection(SolutionItems) = preProject
+		CrudDatastore\Framework\Internal\ConstantPropertiesVisitor.cs = CrudDatastore\Framework\Internal\ConstantPropertiesVisitor.cs
+		CrudDatastore\Framework\Internal\DataQueryable.cs = CrudDatastore\Framework\Internal\DataQueryable.cs
+		CrudDatastore\Framework\Internal\DataQueryableExpressionTreeModifier.cs = CrudDatastore\Framework\Internal\DataQueryableExpressionTreeModifier.cs
+		CrudDatastore\Framework\Internal\DataQueryableProvider.cs = CrudDatastore\Framework\Internal\DataQueryableProvider.cs
+		CrudDatastore\Framework\Internal\EntityCollection.cs = CrudDatastore\Framework\Internal\EntityCollection.cs
+		CrudDatastore\Framework\Internal\EntityEntry.cs = CrudDatastore\Framework\Internal\EntityEntry.cs
+		CrudDatastore\Framework\Internal\IDataQueryable.cs = CrudDatastore\Framework\Internal\IDataQueryable.cs
+		CrudDatastore\Framework\Internal\IEntityCollection.cs = CrudDatastore\Framework\Internal\IEntityCollection.cs
+		CrudDatastore\Framework\Internal\InterceptNavigationPropertyExpressionTreeModifier.cs = CrudDatastore\Framework\Internal\InterceptNavigationPropertyExpressionTreeModifier.cs
+		CrudDatastore\Framework\Internal\Interceptor.cs = CrudDatastore\Framework\Internal\Interceptor.cs
+		CrudDatastore\Framework\Internal\MaterializeObjectDataQuery.cs = CrudDatastore\Framework\Internal\MaterializeObjectDataQuery.cs
+		CrudDatastore\Framework\Internal\MaterializeObjectEnumerator.cs = CrudDatastore\Framework\Internal\MaterializeObjectEnumerator.cs
+		CrudDatastore\Framework\Internal\MaterializeObjectExpressionTreeModifier.cs = CrudDatastore\Framework\Internal\MaterializeObjectExpressionTreeModifier.cs
+		CrudDatastore\Framework\Internal\ParameterReplacerVisitor.cs = CrudDatastore\Framework\Internal\ParameterReplacerVisitor.cs
+		CrudDatastore\Framework\Internal\PropertyMap.cs = CrudDatastore\Framework\Internal\PropertyMap.cs
+		CrudDatastore\Framework\Internal\ProxyBuilder.cs = CrudDatastore\Framework\Internal\ProxyBuilder.cs
+		CrudDatastore\Framework\Internal\TypeExtensions.cs = CrudDatastore\Framework\Internal\TypeExtensions.cs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Internal", "Internal", "{C1F7D85A-9E42-47B3-A6D9-5E8B2F14A7C0}"
+	ProjectSection(SolutionItems) = preProject
+		CrudDatastore\Internal\SpecificationCommand.cs = CrudDatastore\Internal\SpecificationCommand.cs
+		CrudDatastore\Internal\SpecificationExpression.cs = CrudDatastore\Internal\SpecificationExpression.cs
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +121,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	    {E91A4C6F-7D23-4B8E-9F51-2A6D8C3B7E40} = {A9904247-B128-4901-9E2A-28CE910A2C32}
+		{F3D2C9A1-8B74-4E6F-93A5-1D7E8C2B9F60} = {A7F0E6D8-5C3B-4E92-9F14-7B8D2C1A6F53}
+		{6B9E4A21-3D5F-4C88-92E7-8A14F0D6C3B5} = {A7F0E6D8-5C3B-4E92-9F14-7B8D2C1A6F53}
+		{8D2B7E41-5F9C-4A36-9E18-3C7F61B0D5A2} = {6B9E4A21-3D5F-4C88-92E7-8A14F0D6C3B5}
+		{C1F7D85A-9E42-47B3-A6D9-5E8B2F14A7C0} = {A7F0E6D8-5C3B-4E92-9F14-7B8D2C1A6F53}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B93C4EB7-C9C4-445F-A8D3-44B28812A26B}
