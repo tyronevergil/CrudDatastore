@@ -15,7 +15,7 @@
     <PackageProjectUrl>https://github.com/tyronevergil/CrudDatastore</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageTags>orm;crud;repository;data;datastore</PackageTags>
-    <Description>A lightweight datastore and query framework for .NET</Description>
+    <Description>A flexible datastore framework for .NET"</Description>
     <Version>2.0.0-preview.1</Version>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
