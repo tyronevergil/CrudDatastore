@@ -153,13 +153,24 @@ public class DataContext : DataContextBase
 }
 ```
 
-**CRUD**
+**CRUD with navigation properties**
 
 ```csharp
 // Create
 using (var context = DataContext.Factory())
 {
-    var person = new Person { Firstname = "Pauline", Lastname = "Koch" };
+    var person = new Person
+    {
+        PersonId = 1,
+        Firstname = "Pauline",
+        Lastname = "Koch",
+        Identifications = new List<Identification>
+        {
+            new Identification { IdentificationId = 1001, PersonId = 1, Value = "EMP-001" },
+            new Identification { IdentificationId = 1002, PersonId = 1, Value = "PASS-778" }
+        }
+    };
+
     context.Add(person);
     context.SaveChanges();
 }
@@ -168,6 +179,7 @@ using (var context = DataContext.Factory())
 using (var context = DataContext.Factory())
 {
     var person = context.FindSingle<Person>(p => p.PersonId == 1);
+    var primaryId = person?.Identifications?.FirstOrDefault();
 }
 
 // Update
@@ -175,17 +187,23 @@ using (var context = DataContext.Factory())
 {
     var person = context.FindSingle<Person>(p => p.PersonId == 1);
     person.Firstname = "Paul";
+    person.Identifications.Add(
+        new Identification { IdentificationId = 1003, PersonId = person.PersonId, Value = "VPN-204" });
+
     context.SaveChanges();
 }
 
 // Delete
 using (var context = DataContext.Factory())
 {
-    var person = context.FindSingle<Person>(p => p.PersonId == 2);
+    var person = context.FindSingle<Person>(p => p.PersonId == 1);
+
     context.Delete(person);
     context.SaveChanges();
 }
 ```
+
+##
 
 See **[CrudDatastore.Samples](https://github.com/tyronevergil/CrudDatastore.Samples)** for
 complete examples covering SQL Server, Oracle, navigation properties, and multi-database units of work.
