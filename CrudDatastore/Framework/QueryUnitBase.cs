@@ -46,6 +46,17 @@ namespace CrudDatastore.Framework
             return resultProperty.GetValue(task);
         }
 
+        private static async Task<object> GetTaskResultAsync(Task task)
+        {
+            await task.ConfigureAwait(false);
+
+            var resultProperty = task.GetType().GetProperty("Result", BindingFlags.Public | BindingFlags.Instance);
+            if (resultProperty == null)
+                return null;
+
+            return resultProperty.GetValue(task);
+        }
+
         private object MaterializeQueryableData(Type entityType, object queryableData)
         {
             var toListMethod = typeof(Enumerable)
@@ -59,17 +70,6 @@ namespace CrudDatastore.Framework
                 .MakeGenericMethod(new[] { entityType });
 
             return asQueryableMethod.Invoke(null, new[] { list });
-        }
-
-        private static async Task<object> GetTaskResultAsync(Task task)
-        {
-            await task.ConfigureAwait(false);
-
-            var resultProperty = task.GetType().GetProperty("Result", BindingFlags.Public | BindingFlags.Instance);
-            if (resultProperty == null)
-                return null;
-
-            return resultProperty.GetValue(task);
         }
 
         private T MaterializeEntityObject<T>(T entity) where T : EntityBase
