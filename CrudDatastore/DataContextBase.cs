@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using CrudDatastore.Internal;
 
 namespace CrudDatastore
 {
@@ -8,6 +9,14 @@ namespace CrudDatastore
     {
         private bool _disposed;
         private readonly IUnitOfWork _unitOfWork;
+
+        public DataContextBase(IUnitOfWorkSync unitOfWorkSync)
+            : this(new UnitOfWorkSyncAdapter(unitOfWorkSync))
+        { }
+
+        public DataContextBase(IUnitOfWorkAsync unitOfWorkAsync)
+            : this(new UnitOfWorkAsyncAdapter(unitOfWorkAsync))
+        { }
 
         public DataContextBase(IUnitOfWork unitOfWork)
         {

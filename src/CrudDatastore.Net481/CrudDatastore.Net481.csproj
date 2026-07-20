@@ -19,4 +19,8 @@
     <Compile Include="../../CrudDatastore/Framework/Internal/*.cs" Link="Framework/Internal/%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="..\..\CrudDatastore\IQueryUnitEvents.cs" />
+  </ItemGroup>
+
 </Project>

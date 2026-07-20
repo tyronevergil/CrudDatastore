@@ -1,11 +1,13 @@
-﻿using System;
-using System.Threading.Tasks;
-
-namespace CrudDatastore
+﻿namespace CrudDatastore
 {
-    public interface ICommand
+    /// <summary>
+    /// Full-featured command execution contract supporting both synchronous and asynchronous operations.
+    /// Implement this interface when you provide both Execute and ExecuteAsync operations.
+    /// 
+    /// For synchronous-only implementations, implement <see cref="ICommandSync"/> instead.
+    /// For asynchronous-only implementations, implement <see cref="ICommandAsync"/> instead.
+    /// </summary>
+    public interface ICommand : ICommandSync, ICommandAsync
     {
-        void Execute(string command, params object[] parameters);
-        Task ExecuteAsync(string command, params object[] parameters);
     }
 }
