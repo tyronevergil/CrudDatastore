@@ -1,11 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <RepositoryReadme>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../src/CrudDatastore.nuget.md'))</RepositoryReadme>
     <TargetFrameworks>netstandard2.0;net481;net8.0;net10.0</TargetFrameworks>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AssemblyName>CrudDatastore</AssemblyName>
     <RootNamespace>CrudDatastore</RootNamespace>
     <PackageId>CrudDatastore</PackageId>
+    <Product>CrudDatastore</Product>
+    <Description>A flexible datastore framework for .NET</Description> 
+    <PackageTags>orm;crud;repository;data;datastore</PackageTags>
+    <Version>2.0.0-preview.2</Version>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion> 
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">

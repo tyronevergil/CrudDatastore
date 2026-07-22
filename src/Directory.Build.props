@@ -1,24 +1,17 @@
 <Project>
   <PropertyGroup>
     <RepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</RepositoryRoot>
-    <RepositoryReadme>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../src/NUGET.md'))</RepositoryReadme>
     <ImplicitUsings>disable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <IsPackable>true</IsPackable>
     <Authors>Tyrone Roson</Authors>
     <Owners>tyronevergil</Owners>
-    <Product>CrudDatastore</Product>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Copyright>Copyright © 2017 Tyrone Roson</Copyright>
     <RepositoryUrl>https://github.com/tyronevergil/CrudDatastore</RepositoryUrl>
     <PackageProjectUrl>https://github.com/tyronevergil/CrudDatastore</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <PackageTags>orm;crud;repository;data;datastore</PackageTags>
-    <Description>A flexible datastore framework for .NET</Description>
-    <Version>2.0.0-preview.1</Version>
-    <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <FileVersion>2.0.0.0</FileVersion>
     <InformationalVersion>$(Version)</InformationalVersion>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

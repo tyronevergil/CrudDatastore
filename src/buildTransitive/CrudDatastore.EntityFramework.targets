@@ -1,0 +1,233 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask
+      TaskName="GenerateCrudTemplate"
+      TaskFactory="CodeTaskFactory"
+      AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+
+    <ParameterGroup>
+      <TemplateFile ParameterType="System.String" Required="true" />
+      <OutputFile ParameterType="System.String" Required="true" />
+      <RootNamespace ParameterType="System.String" Required="true" />
+      <ProjectName ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+try
+{
+    if (!File.Exists(TemplateFile))
+    {
+        Log.LogWarning("Template file not found: {0}", TemplateFile);
+        return false;
+    }
+
+    string content = File.ReadAllText(TemplateFile);
+    content = content.Replace("{{RootNamespace}}", RootNamespace);
+    content = content.Replace("{{ProjectName}}", ProjectName);
+    
+    string outputDir = Path.GetDirectoryName(OutputFile);
+    if (!Directory.Exists(outputDir))
+    {
+        Directory.CreateDirectory(outputDir);
+    }
+    
+    File.WriteAllText(OutputFile, content);
+}
+catch (Exception ex)
+{
+    Log.LogError("GenerateCrudTemplate failed: {0}", ex.Message);
+    return false;
+}
+      ]]></Code>
+    </Task>
+
+  </UsingTask>
+
+  <UsingTask
+      TaskName="UpdateProjectFileWithCompileItems"
+      TaskFactory="CodeTaskFactory"
+      AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+
+    <ParameterGroup>
+      <ProjectFilePath ParameterType="System.String" Required="true" />
+      <CompileItems ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+try
+{
+    Log.LogMessage("UpdateProjectFileWithCompileItems: ProjectFile={0}", ProjectFilePath);
+    Log.LogMessage("UpdateProjectFileWithCompileItems: Items={0}", CompileItems);
+    
+    if (!File.Exists(ProjectFilePath))
+    {
+        Log.LogError("Project file not found: {0}", ProjectFilePath);
+        return false;
+    }
+
+    string projectDir = Path.GetDirectoryName(ProjectFilePath);
+    string projectContent = File.ReadAllText(ProjectFilePath);
+    
+    // Split semicolon-separated items
+    string[] items = CompileItems.Split(new[] { ';' }, System.StringSplitOptions.RemoveEmptyEntries);
+    Log.LogMessage("Processing {0} compile items", items.Length);
+    
+    int added = 0;
+    
+    foreach (string item in items)
+    {
+        string itemTrimmed = item.Trim();
+        if (string.IsNullOrWhiteSpace(itemTrimmed))
+            continue;
+            
+        // Normalize path: remove project directory prefix and convert to relative path
+        string include = itemTrimmed;
+        if (include.StartsWith(projectDir, StringComparison.OrdinalIgnoreCase))
+        {
+            include = include.Substring(projectDir.Length).TrimStart('\\', '/');
+        }
+        include = include.Replace("\\", "/");
+        
+        // Check if this Compile item already exists in the project file
+        string compileEntry = string.Format("<Compile Include=\"{0}\"", include);
+        if (projectContent.IndexOf(compileEntry, StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            Log.LogMessage("Compile include already exists: {0}", include);
+            continue;
+        }
+        
+        // Find the closing </ItemGroup> tag to insert before it
+        int lastItemGroupEnd = projectContent.LastIndexOf("</ItemGroup>", StringComparison.OrdinalIgnoreCase);
+        if (lastItemGroupEnd > 0)
+        {
+            string newCompileItem = string.Format("    <Compile Include=\"{0}\" />\r\n  ", include);
+            projectContent = projectContent.Insert(lastItemGroupEnd, newCompileItem);
+            Log.LogMessage("Added Compile include: {0}", include);
+            added++;
+        }
+        else
+        {
+            // No ItemGroup found, create one before closing Project tag
+            int projectEnd = projectContent.LastIndexOf("</Project>", StringComparison.OrdinalIgnoreCase);
+            if (projectEnd > 0)
+            {
+                string newItemGroup = string.Format("  <ItemGroup>\r\n    <Compile Include=\"{0}\" />\r\n  </ItemGroup>\r\n", include);
+                projectContent = projectContent.Insert(projectEnd, newItemGroup);
+                Log.LogMessage("Created new ItemGroup and added: {0}", include);
+                added++;
+            }
+        }
+    }
+    
+    if (added > 0)
+    {
+        Log.LogMessage("Writing project file with {0} new items", added);
+        File.WriteAllText(ProjectFilePath, projectContent);
+        Log.LogMessage("Successfully updated project file");
+    }
+    else
+    {
+        Log.LogMessage("No new items to add");
+    }
+}
+catch (Exception ex)
+{
+    Log.LogError("UpdateProjectFileWithCompileItems failed: {0}", ex.Message);
+    Log.LogError("Stack trace: {0}", ex.StackTrace);
+    return false;
+}
+      ]]></Code>
+    </Task>
+
+  </UsingTask>
+
+  <PropertyGroup>
+    <CrudTemplateRoot>$(MSBuildThisFileDirectory)..\templates\any\</CrudTemplateRoot>
+    <CrudProjectRoot>$(MSBuildProjectDirectory)\</CrudProjectRoot>
+    <CrudMarkerFile>$(MSBuildProjectDirectory)\.cruddatastore-generated</CrudMarkerFile>
+    
+    <!-- Map TargetFramework (SDK-style) or TargetFrameworkVersion (packages.config) to template folder -->
+    <CrudTemplateFrameworkFolder Condition="'$(TargetFramework)' != ''">$(TargetFramework)</CrudTemplateFrameworkFolder>
+    <CrudTemplateFrameworkFolder Condition="'$(TargetFramework)' == '' and '$(TargetFrameworkVersion)' == 'v4.8.1'">net481</CrudTemplateFrameworkFolder>
+    <!-- <CrudTemplateFrameworkFolder Condition="'$(TargetFramework)' == '' and '$(TargetFrameworkVersion)' == 'v4.7.2'">net472</CrudTemplateFrameworkFolder> -->
+    <!-- <CrudTemplateFrameworkFolder Condition="'$(TargetFramework)' == '' and '$(TargetFrameworkVersion)' == 'v4.7.1'">net471</CrudTemplateFrameworkFolder> -->
+    <!-- <CrudTemplateFrameworkFolder Condition="'$(TargetFramework)' == '' and '$(TargetFrameworkVersion)' == 'v4.7'">net47</CrudTemplateFrameworkFolder> -->
+    <!-- <CrudTemplateFrameworkFolder Condition="'$(TargetFramework)' == '' and '$(TargetFrameworkVersion)' == 'v4.6.2'">net462</CrudTemplateFrameworkFolder> -->
+    <!-- <CrudTemplateFrameworkFolder Condition="'$(TargetFramework)' == '' and '$(TargetFrameworkVersion)' == 'v4.6.1'">net461</CrudTemplateFrameworkFolder> -->
+  </PropertyGroup>
+
+  <Target Name="GenerateCrudTemplates" BeforeTargets="ResolveAssemblyReferences">
+
+    <!-- Only run once on first build - check if marker file exists -->
+    <PropertyGroup>
+      <CrudShouldGenerate Condition="!Exists('$(CrudMarkerFile)') AND !Exists('$(CrudProjectRoot)DataContext.cs')">true</CrudShouldGenerate>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(CrudShouldGenerate)' == 'true'">
+      <!-- Generate into project folders -->
+      <CrudFilesToGenerate Include="DataContext">
+        <TemplateFile>$(CrudTemplateRoot)any\DataContext.cs.tpl</TemplateFile>
+        <OutputFile>$(CrudProjectRoot)DataContext.cs</OutputFile>
+      </CrudFilesToGenerate>
+
+      <CrudFilesToGenerate Include="UnitOfWorkInMemory">
+        <TemplateFile>$(CrudTemplateRoot)any\UnitOfWorkInMemory.cs.tpl</TemplateFile>
+        <OutputFile>$(CrudProjectRoot)UnitOfWorkInMemory.cs</OutputFile>
+      </CrudFilesToGenerate>
+
+      <CrudFilesToGenerate Include="Person">
+        <TemplateFile>$(CrudTemplateRoot)any\Person.cs.tpl</TemplateFile>
+        <OutputFile>$(CrudProjectRoot)Entities\Person.cs</OutputFile>
+      </CrudFilesToGenerate>
+
+      <CrudFilesToGenerate Include="Identification">
+        <TemplateFile>$(CrudTemplateRoot)any\Identification.cs.tpl</TemplateFile>
+        <OutputFile>$(CrudProjectRoot)Entities\Identification.cs</OutputFile>
+      </CrudFilesToGenerate>
+
+      <CrudFilesToGenerate Include="PersonSpecs">
+        <TemplateFile>$(CrudTemplateRoot)any\PersonSpecs.cs.tpl</TemplateFile>
+        <OutputFile>$(CrudProjectRoot)Specifications\PersonSpecs.cs</OutputFile>
+      </CrudFilesToGenerate>
+
+      <CrudFilesToGenerate Include="UnitOfWorkEf" Condition="Exists('$(CrudTemplateRoot)$(CrudTemplateFrameworkFolder)\UnitOfWorkEf.cs.tpl')">
+        <TemplateFile>$(CrudTemplateRoot)$(CrudTemplateFrameworkFolder)\UnitOfWorkEf.cs.tpl</TemplateFile>
+        <OutputFile>$(CrudProjectRoot)UnitOfWorkEf.cs</OutputFile>
+      </CrudFilesToGenerate>
+    </ItemGroup>
+
+    <!-- Generate each file if it doesn't already exist -->
+    <GenerateCrudTemplate
+        Condition="'$(CrudShouldGenerate)' == 'true' AND !Exists('%(CrudFilesToGenerate.OutputFile)')"
+        TemplateFile="%(CrudFilesToGenerate.TemplateFile)"
+        OutputFile="%(CrudFilesToGenerate.OutputFile)"
+        RootNamespace="$(RootNamespace)"
+        ProjectName="$(MSBuildProjectName)" />
+
+    <!-- Update project file with Compile items (for packages.config projects) BEFORE compilation -->
+    <UpdateProjectFileWithCompileItems
+        Condition="'$(CrudShouldGenerate)' == 'true' AND '$(TargetFramework)' == ''"
+        ProjectFilePath="$(MSBuildProjectFullPath)"
+        CompileItems="$(CrudProjectRoot)DataContext.cs;$(CrudProjectRoot)UnitOfWorkInMemory.cs;$(CrudProjectRoot)Entities/Person.cs;$(CrudProjectRoot)Entities/Identification.cs;$(CrudProjectRoot)Specifications/PersonSpecs.cs;$(CrudProjectRoot)UnitOfWorkEf.cs" />
+
+    <!-- Create marker file to prevent re-generation -->
+    <Touch Files="$(CrudMarkerFile)" AlwaysCreate="true" Condition="'$(CrudShouldGenerate)' == 'true'" />
+
+    <!-- Add generated files to project for compilation -->
+    <ItemGroup Condition="'$(CrudShouldGenerate)' == 'true'">
+      <Compile Include="$(CrudProjectRoot)DataContext.cs" />
+      <Compile Include="$(CrudProjectRoot)UnitOfWorkInMemory.cs" />
+      <Compile Include="$(CrudProjectRoot)Entities\*.cs" />
+      <Compile Include="$(CrudProjectRoot)Specifications\*.cs" />
+      <Compile Include="$(CrudProjectRoot)UnitOfWorkEf.cs" Condition="Exists('$(CrudProjectRoot)UnitOfWorkEf.cs')" />
+    </ItemGroup>
+
+  </Target>
+
+</Project>

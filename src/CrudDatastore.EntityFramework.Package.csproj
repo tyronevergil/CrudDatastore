@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RepositoryReadme>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../src/CrudDatastore.EntityFramework.nuget.md'))</RepositoryReadme>
+    <TargetFrameworks>net481;net8.0;net10.0</TargetFrameworks>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <AssemblyName>CrudDatastore.EntityFramework</AssemblyName>
+    <RootNamespace>CrudDatastore.EntityFramework</RootNamespace>
+    <PackageId>CrudDatastore.EntityFramework</PackageId>
+    <Product>CrudDatastore.EntityFramework</Product>
+    <Description>CrudDatastore EntityFramework boilerplate templates and abstractions</Description>
+    <PackageTags>orm;crud;repository;data;datastore;entityframework;ef6;efcore</PackageTags>
+    <Version>2.0.0-preview.2</Version>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
+  </PropertyGroup>
+
+  <!-- Build transitive assets - for SDK-style projects -->
+  <ItemGroup>
+    <None Include="buildTransitive\CrudDatastore.EntityFramework.props" Pack="true" PackagePath="buildTransitive\CrudDatastore.EntityFramework.props" />
+    <None Include="buildTransitive\CrudDatastore.EntityFramework.targets" Pack="true" PackagePath="buildTransitive\CrudDatastore.EntityFramework.targets" />
+  </ItemGroup>
+
+  <!-- Build assets - for packages.config projects -->
+  <ItemGroup>
+    <None Include="buildTransitive\CrudDatastore.EntityFramework.props" Pack="true" PackagePath="build\CrudDatastore.EntityFramework.props" />
+    <None Include="buildTransitive\CrudDatastore.EntityFramework.targets" Pack="true" PackagePath="build\CrudDatastore.EntityFramework.targets" />
+  </ItemGroup>
+
+  <!-- Template files - also pack for all TFMs -->
+  <ItemGroup>
+    <!-- Shared templates for all frameworks -->
+    <None Include="templates\any\any\DataContext.cs.tpl" Pack="true" PackagePath="templates\any\any\DataContext.cs.tpl" Visible="false" />
+    <None Include="templates\any\any\UnitOfWorkInMemory.cs.tpl" Pack="true" PackagePath="templates\any\any\UnitOfWorkInMemory.cs.tpl" Visible="false" />
+    <None Include="templates\any\any\Identification.cs.tpl" Pack="true" PackagePath="templates\any\any\Identification.cs.tpl" Visible="false" />
+    <None Include="templates\any\any\Person.cs.tpl" Pack="true" PackagePath="templates\any\any\Person.cs.tpl" Visible="false" />
+    <None Include="templates\any\any\PersonSpecs.cs.tpl" Pack="true" PackagePath="templates\any\any\PersonSpecs.cs.tpl" Visible="false" />
+    <!-- Framework-specific templates -->
+    <None Include="templates\any\net481\UnitOfWorkEf.cs.tpl" Pack="true" PackagePath="templates\any\net481\UnitOfWorkEf.cs.tpl" Visible="false" />
+    <None Include="templates\any\net8.0\UnitOfWorkEf.cs.tpl" Pack="true" PackagePath="templates\any\net8.0\UnitOfWorkEf.cs.tpl" Visible="false" />
+    <None Include="templates\any\net10.0\UnitOfWorkEf.cs.tpl" Pack="true" PackagePath="templates\any\net10.0\UnitOfWorkEf.cs.tpl" Visible="false" />
+  </ItemGroup>
+
+  <!-- EF6 for .NET Framework 4.8.1 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="EntityFramework" Version="6.4.*" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net481" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- EF Core for .NET 8.0 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.*" />
+  </ItemGroup>
+
+  <!-- EF Core for .NET 10.0 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.*" />
+  </ItemGroup>
+
+  <!-- CrudDatastore dependency for all frameworks -->
+  <ItemGroup>
+    <PackageReference Include="CrudDatastore" Version="2.0.0-preview.1" />
+  </ItemGroup>
+
+</Project>
