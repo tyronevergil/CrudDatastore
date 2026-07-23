@@ -24,7 +24,12 @@ namespace CrudDatastore.Framework.Internal
             Func<object, Type> getEntityType,
             Func<object, object, Type, Delegate> createMarkNewDelegate)
         {
-            foreach (var e in entries.Where(entry => entry.State == EntityEntry.States.New || entry.State == EntityEntry.States.Modified))
+            // Snapshot first because markNew can mutate the underlying entry dictionary.
+            var entrySnapshot = entries
+                .Where(entry => entry.State == EntityEntry.States.New || entry.State == EntityEntry.States.Modified)
+                .ToList();
+
+            foreach (var e in entrySnapshot)
             {
                 var entry = e.Entry;
                 var entity = e.Entity;
