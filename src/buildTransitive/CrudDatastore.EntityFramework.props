@@ -18,9 +18,7 @@
     <CrudTemplate Include="$(CrudTemplateRoot)any\Person.cs.tpl" />
     <CrudTemplate Include="$(CrudTemplateRoot)any\PersonSpecs.cs.tpl" />
     
-    <!-- EF Templates - TFM-specific -->
-    <CrudTemplate Include="$(CrudTemplateRoot)net481\UnitOfWorkEf.cs.tpl"
-                  Condition="Exists('$(CrudTemplateRoot)net481\UnitOfWorkEf.cs.tpl')" />
+    <!-- EF Templates - TFM-specific (SDK-style projects only) -->
     <CrudTemplate Include="$(CrudTemplateRoot)net8.0\UnitOfWorkEf.cs.tpl"
                   Condition="Exists('$(CrudTemplateRoot)net8.0\UnitOfWorkEf.cs.tpl')" />
     <CrudTemplate Include="$(CrudTemplateRoot)net10.0\UnitOfWorkEf.cs.tpl"

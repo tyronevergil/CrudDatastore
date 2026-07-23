@@ -20,30 +20,32 @@
     <FileVersion>2.0.0.0</FileVersion>
   </PropertyGroup>
 
-  <!-- Build transitive assets - for SDK-style projects -->
+  <!-- Content files (.cs.pp) for net481 packages.config projects -->
+  <!-- All files are in content/ folder on disk, but PackagePath organizes them into subdirectories in the package -->
   <ItemGroup>
-    <None Include="buildTransitive\CrudDatastore.EntityFramework.props" Pack="true" PackagePath="buildTransitive\CrudDatastore.EntityFramework.props" />
-    <None Include="buildTransitive\CrudDatastore.EntityFramework.targets" Pack="true" PackagePath="buildTransitive\CrudDatastore.EntityFramework.targets" />
+    <None Include="content\Person.cs.pp" Pack="true" PackagePath="content\Entities\" />
+    <None Include="content\Identification.cs.pp" Pack="true" PackagePath="content\Entities\" />
+    <None Include="content\PersonSpecs.cs.pp" Pack="true" PackagePath="content\Specifications\" />
+    <None Include="content\DataContext.cs.pp" Pack="true" PackagePath="content\" />
+    <None Include="content\UnitOfWorkEf.cs.pp" Pack="true" PackagePath="content\" />
+    <None Include="content\UnitOfWorkInMemory.cs.pp" Pack="true" PackagePath="content\" />
   </ItemGroup>
 
-  <!-- Build assets - for packages.config projects -->
+  <!-- Build transitive assets - for SDK-style projects (net8.0, net10.0) -->
   <ItemGroup>
-    <None Include="buildTransitive\CrudDatastore.EntityFramework.props" Pack="true" PackagePath="build\CrudDatastore.EntityFramework.props" />
-    <None Include="buildTransitive\CrudDatastore.EntityFramework.targets" Pack="true" PackagePath="build\CrudDatastore.EntityFramework.targets" />
+    <None Include="buildTransitive\CrudDatastore.EntityFramework.props" Pack="true" PackagePath="buildTransitive\" />
+    <None Include="buildTransitive\CrudDatastore.EntityFramework.targets" Pack="true" PackagePath="buildTransitive\" />
   </ItemGroup>
 
-  <!-- Template files - also pack for all TFMs -->
+  <!-- Template files for SDK-style project generation -->
   <ItemGroup>
-    <!-- Shared templates for all frameworks -->
-    <None Include="templates\any\any\DataContext.cs.tpl" Pack="true" PackagePath="templates\any\any\DataContext.cs.tpl" Visible="false" />
-    <None Include="templates\any\any\UnitOfWorkInMemory.cs.tpl" Pack="true" PackagePath="templates\any\any\UnitOfWorkInMemory.cs.tpl" Visible="false" />
-    <None Include="templates\any\any\Identification.cs.tpl" Pack="true" PackagePath="templates\any\any\Identification.cs.tpl" Visible="false" />
-    <None Include="templates\any\any\Person.cs.tpl" Pack="true" PackagePath="templates\any\any\Person.cs.tpl" Visible="false" />
-    <None Include="templates\any\any\PersonSpecs.cs.tpl" Pack="true" PackagePath="templates\any\any\PersonSpecs.cs.tpl" Visible="false" />
-    <!-- Framework-specific templates -->
-    <None Include="templates\any\net481\UnitOfWorkEf.cs.tpl" Pack="true" PackagePath="templates\any\net481\UnitOfWorkEf.cs.tpl" Visible="false" />
-    <None Include="templates\any\net8.0\UnitOfWorkEf.cs.tpl" Pack="true" PackagePath="templates\any\net8.0\UnitOfWorkEf.cs.tpl" Visible="false" />
-    <None Include="templates\any\net10.0\UnitOfWorkEf.cs.tpl" Pack="true" PackagePath="templates\any\net10.0\UnitOfWorkEf.cs.tpl" Visible="false" />
+    <None Include="templates\any\any\DataContext.cs.tpl" Pack="true" PackagePath="templates\any\any\" Visible="false" />
+    <None Include="templates\any\any\UnitOfWorkInMemory.cs.tpl" Pack="true" PackagePath="templates\any\any\" Visible="false" />
+    <None Include="templates\any\any\Identification.cs.tpl" Pack="true" PackagePath="templates\any\any\" Visible="false" />
+    <None Include="templates\any\any\Person.cs.tpl" Pack="true" PackagePath="templates\any\any\" Visible="false" />
+    <None Include="templates\any\any\PersonSpecs.cs.tpl" Pack="true" PackagePath="templates\any\any\" Visible="false" />
+    <None Include="templates\any\net8.0\UnitOfWorkEf.cs.tpl" Pack="true" PackagePath="templates\any\net8.0\" Visible="false" />
+    <None Include="templates\any\net10.0\UnitOfWorkEf.cs.tpl" Pack="true" PackagePath="templates\any\net10.0\" Visible="false" />
   </ItemGroup>
 
   <!-- EF6 for .NET Framework 4.8.1 -->
