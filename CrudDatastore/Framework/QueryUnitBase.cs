@@ -158,7 +158,6 @@ namespace CrudDatastore.Framework
             return await _materialization.GetRelatedPropertyValueAsync(entity, prop).ConfigureAwait(false);
         }
 
-        // Sync wrapper for proxy initialization (blocks on async call)
         protected object GetRelatedPropertyValue(object entity, PropertyInfo prop)
         {
             return _materialization.GetRelatedPropertyValue(entity, prop);
