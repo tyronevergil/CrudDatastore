@@ -38,6 +38,24 @@ namespace CrudDatastore.Foundation
             _readCommandTriggerAsync = readCommandTriggerAsync;
         }
 
+        public DelegateQueryAdapter(Func<Expression<Func<T, bool>>, IQueryable<T>> readExpressionTrigger,
+                                    Func<Expression<Func<T, bool>>, Task<IQueryable<T>>> readExpressionTriggerAsync)
+            : this(readExpressionTrigger, (sql, parameters) => readExpressionTrigger((predicate) => false),
+                   readExpressionTriggerAsync, (sql, parameters) => readExpressionTriggerAsync((predicate) => false))
+        {
+        }
+
+        public DelegateQueryAdapter(Func<Expression<Func<T, bool>>, IQueryable<T>> readExpressionTrigger,
+                                    Func<string, object[], IQueryable<T>> readCommandTrigger,
+                                    Func<Expression<Func<T, bool>>, Task<IQueryable<T>>> readExpressionTriggerAsync,
+                                    Func<string, object[], Task<IQueryable<T>>> readCommandTriggerAsync)
+        {
+            _readExpressionTrigger = readExpressionTrigger;
+            _readCommandTrigger = readCommandTrigger;
+            _readExpressionTriggerAsync = readExpressionTriggerAsync;
+            _readCommandTriggerAsync = readCommandTriggerAsync;
+        }
+
         public virtual IQueryable<T> Execute(Expression<Func<T, bool>> predicate)
         {
             if (_readExpressionTrigger == null)

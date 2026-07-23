@@ -59,6 +59,41 @@ namespace CrudDatastore.Foundation
             _deleteTriggerAsync = deleteTriggerAsync;
         }
 
+        public DelegateCrudAdapter(Action<T> createTrigger,
+                                   Action<T> updateTrigger,
+                                   Action<T> deleteTrigger,
+                                   Func<T, Task> createTriggerAsync,
+                                   Func<T, Task> updateTriggerAsync,
+                                   Func<T, Task> deleteTriggerAsync,
+                                   Func<Expression<Func<T, bool>>, IQueryable<T>> readExpressionTrigger,
+                                   Func<Expression<Func<T, bool>>, Task<IQueryable<T>>> readExpressionTriggerAsync)
+            : this(createTrigger, updateTrigger, deleteTrigger,
+                   createTriggerAsync, updateTriggerAsync, deleteTriggerAsync,
+                   readExpressionTrigger, (sql, parameters) => readExpressionTrigger((predicate) => false),
+                   readExpressionTriggerAsync, (sql, parameters) => readExpressionTriggerAsync((predicate) => false))
+        {
+        }
+
+        public DelegateCrudAdapter(Action<T> createTrigger,
+                                   Action<T> updateTrigger,
+                                   Action<T> deleteTrigger,
+                                   Func<T, Task> createTriggerAsync,
+                                   Func<T, Task> updateTriggerAsync,
+                                   Func<T, Task> deleteTriggerAsync,
+                                   Func<Expression<Func<T, bool>>, IQueryable<T>> readExpressionTrigger,
+                                   Func<string, object[], IQueryable<T>> readCommandTrigger,
+                                   Func<Expression<Func<T, bool>>, Task<IQueryable<T>>> readExpressionTriggerAsync,
+                                   Func<string, object[], Task<IQueryable<T>>> readCommandTriggerAsync)
+            : base(readExpressionTrigger, readCommandTrigger, readExpressionTriggerAsync, readCommandTriggerAsync)
+        {
+            _createTrigger = createTrigger;
+            _updateTrigger = updateTrigger;
+            _deleteTrigger = deleteTrigger;
+            _createTriggerAsync = createTriggerAsync;
+            _updateTriggerAsync = updateTriggerAsync;
+            _deleteTriggerAsync = deleteTriggerAsync;
+        }
+
         public virtual void Create(T entity)
         {
             if (_createTrigger == null)
