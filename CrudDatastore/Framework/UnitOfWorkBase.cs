@@ -1,4 +1,4 @@
-﻿using CrudDatastore.Foundation;
+using CrudDatastore.Foundation;
 using CrudDatastore.Framework.Internal;
 using System;
 using System.Collections;
@@ -7,6 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
+using ObjectAction = System.Action<object>;
 
 namespace CrudDatastore.Framework
 {
@@ -14,122 +15,80 @@ namespace CrudDatastore.Framework
     {
         private bool _disposed;
 
-        protected UnitOfWorkBase()
-        {
-        }
+        private readonly EntityChangeTracker _changeTracker;
+        private readonly CommitProcessor _commitProcessor;
+        private readonly RelatedEntityPropagationService _relatedEntityPropagation;
+        private readonly ReflectionMethodCache _methodCache = new ReflectionMethodCache();
+        private readonly object _dispatchSync = new object();
+        private readonly IDictionary<Type, ObjectAction> _markModifiedDispatch = new Dictionary<Type, ObjectAction>();
+        private readonly IDictionary<Type, Func<object, object, Delegate>> _markNewFactoryDispatch = new Dictionary<Type, Func<object, object, Delegate>>();
+        private readonly IDictionary<Type, Func<object, Delegate>> _markDeletedFactoryDispatch = new Dictionary<Type, Func<object, Delegate>>();
 
         private readonly IDictionary<Type, IDataStore> _dataStores = new Dictionary<Type, IDataStore>();
-
         private readonly Dictionary<EntityBase, EntityEntry> _entityEntries = new Dictionary<EntityBase, EntityEntry>();
 
         public event EventHandler<EntityEventArgs> EntityCreate;
         public event EventHandler<EntityEventArgs> EntityUpdate;
         public event EventHandler<EntityEventArgs> EntityDelete;
 
+        protected UnitOfWorkBase()
+        {
+            _changeTracker = new EntityChangeTracker(_entityEntries, _materializedEntities);
+            _relatedEntityPropagation = new RelatedEntityPropagationService(_dataMapping, _dataQueries);
+            _commitProcessor = new CommitProcessor(
+                _dataQueries,
+                GetEntityType,
+                (args) => EntityCreate?.Invoke(this, args),
+                (args) => EntityUpdate?.Invoke(this, args),
+                (args) => EntityDelete?.Invoke(this, args),
+                () =>
+                {
+                    _changeTracker.EntityEntries.Clear();
+                    _materializedEntities.Clear();
+                });
+        }
+
         public virtual void MarkNew<T>(T entity) where T : EntityBase
         {
-            MarkEntityState(entity, EntityEntry.States.New , (e) => { }, (e) => { });
+            _changeTracker.MarkEntityState(entity, EntityEntry.States.New, (e) => { }, (e) => { });
         }
 
         public virtual Task MarkNewAsync<T>(T entity) where T : EntityBase
         {
             MarkNew(entity);
-
             return Task.CompletedTask;
         }
 
         public virtual void MarkModified<T>(T entity) where T : EntityBase
         {
-            MarkEntityState(entity, EntityEntry.States.Modified, (e) => { }, (e) => { });
+            _changeTracker.MarkEntityState(entity, EntityEntry.States.Modified, (e) => { }, (e) => { });
         }
 
         public virtual Task MarkModifiedAsync<T>(T entity) where T : EntityBase
         {
             MarkModified(entity);
-
             return Task.CompletedTask;
         }
 
         public virtual void MarkDeleted<T>(T entity) where T : EntityBase
         {
-            MarkEntityState(entity, EntityEntry.States.Deleted, (e) => { }, (e) => { });
+            _changeTracker.MarkEntityState(entity, EntityEntry.States.Deleted, (e) => { }, (e) => { });
         }
 
         public virtual Task MarkDeletedAsync<T>(T entity) where T : EntityBase
         {
             MarkDeleted(entity);
-
             return Task.CompletedTask;
         }
 
         public virtual void Commit()
         {
-            DetectChanges();
-
-            while (true)
-            {
-                var entry = _entityEntries.Where(e => e.Value.UnCommited).Select(e => e.Value).OrderBy(e => e.State).FirstOrDefault();
-                if (entry != null)
-                {
-
-                    var b = true;
-                    switch (entry.State)
-                    {
-                        case EntityEntry.States.New:
-                            b = InvokeCreate(entry);
-                            break;
-                        case EntityEntry.States.Modified:
-                            b = InvokeUpdate(entry);
-                            break;
-                        case EntityEntry.States.Deleted:
-                            b = InvokeDelete(entry);
-                            break;
-                    }
-
-                    if (b)
-                        entry.Commit();
-                }
-                else
-                    break;
-            }
-
-            _entityEntries.Clear();
-            _materializedEntities.Clear();
+            _commitProcessor.Commit(_changeTracker.EntityEntries, DetectChanges);
         }
 
         public virtual async Task CommitAsync()
         {
-            await DetectChangesAsync();
-
-            while (true)
-            {
-                var entry = _entityEntries.Where(e => e.Value.UnCommited).Select(e => e.Value).OrderBy(e => e.State).FirstOrDefault();
-                if (entry != null)
-                {
-
-                    var b = true;
-                    switch (entry.State)
-                    {
-                        case EntityEntry.States.New:
-                            b = await InvokeCreateAsync(entry);
-                            break;
-                        case EntityEntry.States.Modified:
-                            b = await InvokeUpdateAsync(entry);
-                            break;
-                        case EntityEntry.States.Deleted:
-                            b = await InvokeDeleteAsync(entry);
-                            break;
-                    }
-
-                    if (b)
-                        entry.Commit();
-                }
-                else
-                    break;
-            }
-
-            _entityEntries.Clear();
-            _materializedEntities.Clear();
+            await _commitProcessor.CommitAsync(_changeTracker.EntityEntries, DetectChangesAsync).ConfigureAwait(false);
         }
 
         protected virtual IPropertyMap<T> Register<T>(IDataStore<T> dataStore) where T : EntityBase
@@ -139,15 +98,8 @@ namespace CrudDatastore.Framework
 
         protected override object CreateRelatedEntityCollection(object entity, object expressionPredicate, Type relatedEntityType, object relatedData)
         {
-            var unitOfWorkType = typeof(UnitOfWorkBase);
-
-            var paramMarkNew = unitOfWorkType
-                .GetMethod(nameof(MarkNewOnCommitUpdateProperties), BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod(new[] { relatedEntityType })
-                .Invoke(this, new[] { entity, expressionPredicate });
-
-            var paramMarkDeleted = unitOfWorkType
-                .GetMethod(nameof(MarkDeletedOnCommitForDeletion), BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod(new[] { relatedEntityType })
-                .Invoke(this, new object[] { entity });
+            var paramMarkNew = GetMarkNewFactory(relatedEntityType)(entity, expressionPredicate);
+            var paramMarkDeleted = GetMarkDeletedFactory(relatedEntityType)(entity);
 
             var relatedEntityCollectionType = typeof(EntityCollection<>).MakeGenericType(new[] { relatedEntityType });
             var relatedEntityCollectionObject = Activator.CreateInstance(relatedEntityCollectionType, new[] { relatedData, paramMarkNew, paramMarkDeleted });
@@ -157,124 +109,16 @@ namespace CrudDatastore.Framework
 
         private async Task DetectChangesAsync()
         {
-            var markModified = typeof(UnitOfWorkBase).GetMethod(nameof(MarkModified));
-            foreach (var item in _materializedEntities.ToList())
-            {
-                var entry = item.Key;
-                var entity = item.Value;
-
-                // quick path: value-type or string properties changed
-                if (entry.GetType().GetProperties().Where(prop => prop.PropertyType.IsValueType || Type.GetTypeCode(prop.PropertyType) == TypeCode.String)
-                        .Any(prop => !Equals(prop.GetValue(entry, null), prop.GetValue(entity, null))))
-                {
-                    markModified.MakeGenericMethod(new[] { entry.GetType() }).Invoke(this, new[] { entity });
-                }
-
-                // virtual navigation/property proxies: when a property on entity is non-null but not a proxy/collection -> treat as modification
-                if (entity.GetType().GetProperties().Where(p => p.GetAccessors().Any(a => a.IsVirtual && !a.IsFinal))
-                        .Any(prop =>
-                        {
-                            var value = prop.GetValue(entity, null);
-                            if (value != null)
-                            {
-                                var propType = value.GetType();
-                                return !(typeof(IObjectProxy).IsAssignableFrom(propType) || typeof(IEntityCollection).IsAssignableFrom(propType));
-                            }
-                            return false;
-                        }))
-                {
-                    markModified.MakeGenericMethod(new[] { entry.GetType() }).Invoke(this, new[] { entity });
-                }
-            }
-
-            // process new/modified entries and ensure related entities are marked appropriately
-            var entryList = _entityEntries.Values.Where(e => e.State == EntityEntry.States.New || e.State == EntityEntry.States.Modified).ToList();
-            foreach (var e in entryList)
-            {
-                var entry = e.Entry;
-                var entity = e.Entity;
-
-                var entityType = GetEntityType(entity);
-                foreach (var prop in entityType.GetProperties().Where(p => typeof(EntityBase).IsAssignableFrom(p.PropertyType) || (p.PropertyType.IsGenericType && typeof(EntityBase).IsAssignableFrom(p.PropertyType.GetGenericArguments().First()))))
-                {
-                    var propValue = prop.GetValue(entity);
-                    var propType = propValue != null ? propValue.GetType() : prop.PropertyType;
-                    if (!(typeof(IObjectProxy).IsAssignableFrom(propType) || typeof(IEntityCollection).IsAssignableFrom(propType)))
-                    {
-                        if (_dataMapping.ContainsKey(prop))
-                        {
-                            var expressionPredicate = _dataMapping[prop].DynamicInvoke(entry, _dataQueries);
-
-                            var relatedEntityType = prop.PropertyType.IsGenericType ? prop.PropertyType.GetGenericArguments().First() : prop.PropertyType;
-                            if (_dataQueries.ContainsKey(relatedEntityType))
-                            {
-                                var unitOfWorkType = typeof(UnitOfWorkBase);
-                                var markNew = (Delegate)unitOfWorkType
-                                    .GetMethod(nameof(MarkNewOnCommitUpdateProperties), BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod(new[] { relatedEntityType })
-                                    .Invoke(this, new[] { entry, expressionPredicate });
-
-                                if (prop.PropertyType.IsGenericType)
-                                {
-                                    var entityPropCollection = propValue as IEnumerable;
-                                    var entryPropCollection = (prop.GetValue(entry) ?? await GetRelatedPropertyValueAsync(entry, prop)) as IEnumerable;
-
-                                    if (entryPropCollection != null && (entityPropCollection == null || (entityPropCollection != null && entityPropCollection != entryPropCollection)))
-                                    {
-                                        //var markDeleted = typeof(UnitOfWorkBase).GetMethod(nameof(MarkDeleted));
-                                        //foreach (var item in entryPropCollection)
-                                        //{
-                                        //    markDeleted.MakeGenericMethod(new[] { relatedEntityType }).Invoke(this, new[] { item });
-                                        //}
-                                    }
-
-                                    if (entityPropCollection != null)
-                                    {
-                                        foreach (var item in entityPropCollection)
-                                        {
-                                            markNew.DynamicInvoke(item);
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (propValue != null)
-                                        markNew.DynamicInvoke(propValue);
-                                }
-
-                            }
-                        }
-                    }
-                }
-            }
+            _changeTracker.DetectMaterializedEntityChanges(MarkModifiedObject);
+            await _relatedEntityPropagation.PropagateAsync(
+                _changeTracker.EntityEntries.Values,
+                GetEntityType,
+                CreateMarkNewOnCommitUpdatePropertiesDelegate).ConfigureAwait(false);
         }
 
-        // Sync wrapper for DetectChanges calls
         private void DetectChanges()
         {
             DetectChangesAsync().GetAwaiter().GetResult();
-        }
-
-        private void MarkEntityState<T>(T entity, EntityEntry.States state, Action<object> onCommit, Action<object> onCommitted) where T : EntityBase
-        {
-            if (entity == null)
-                throw new ArgumentNullException(nameof(entity));
-
-            // try to find an existing registration directly by reference
-            EntityEntry existingEntityEntry;
-            if (_entityEntries.TryGetValue(entity, out existingEntityEntry))
-            {
-                if (existingEntityEntry.State == EntityEntry.States.Deleted && state == EntityEntry.States.Modified)
-                    return;
-
-                if (existingEntityEntry.State == EntityEntry.States.New && state == EntityEntry.States.Modified)
-                    return;
-
-                existingEntityEntry.ChangeState(state);
-                return;
-            }
-
-            var entry = _materializedEntities.Any(m => m.Value == entity) ? _materializedEntities.FirstOrDefault(m => m.Value == entity).Key : entity;
-            _entityEntries.Add(entity, new EntityEntry(state, entry, entity, onCommit, onCommitted));
         }
 
         private Action<T> MarkNewOnCommitUpdateProperties<T>(object parent, Expression expression) where T : EntityBase
@@ -283,7 +127,7 @@ namespace CrudDatastore.Framework
 
             return (e) =>
             {
-                MarkEntityState(e, EntityEntry.States.New,
+                _changeTracker.MarkEntityState(e, EntityEntry.States.New,
 
                 /* on commit */
                 (obj) =>
@@ -313,25 +157,7 @@ namespace CrudDatastore.Framework
                             var mappingEntityType = _dataTableMapping[keyTypes];
                             var table = _dataQueries[mappingEntityType];
 
-                            var mappingEntity = Activator.CreateInstance(mappingEntityType);
-                            foreach (var p in mappingEntityType.GetProperties())
-                            {
-                                var value = default(object);
-
-                                var entryProp = parentType.GetProperty(p.Name);
-                                if (entryProp != null)
-                                {
-                                    value = entryProp.GetValue(parent);
-                                }
-
-                                var entityProp = entityType.GetProperty(p.Name);
-                                if (entityProp != null)
-                                {
-                                    value = entityProp.GetValue(obj);
-                                }
-
-                                p.SetValue(mappingEntity, value, null);
-                            }
+                            var mappingEntity = MappingEntityHelper.CreateMappingEntity(mappingEntityType, parent, parentType, obj, entityType);
 
                             var add = table.GetType().GetMethod("Add");
                             add.Invoke(table, new[] { mappingEntity });
@@ -353,32 +179,13 @@ namespace CrudDatastore.Framework
                         var mappingEntityType = _dataTableMapping[keyTypes];
                         var table = _dataQueries[mappingEntityType];
 
-                        var mappingEntity = Activator.CreateInstance(mappingEntityType);
-                        foreach (var p in mappingEntityType.GetProperties())
-                        {
-                            var value = default(object);
-
-                            var entryProp = parentType.GetProperty(p.Name);
-                            if (entryProp != null)
-                            {
-                                value = entryProp.GetValue(parent);
-                            }
-
-                            var entityProp = entityType.GetProperty(p.Name);
-                            if (entityProp != null)
-                            {
-                                value = entityProp.GetValue(obj);
-                            }
-
-                            p.SetValue(mappingEntity, value, null);
-                        }
+                        var mappingEntity = MappingEntityHelper.CreateMappingEntity(mappingEntityType, parent, parentType, obj, entityType);
 
                         var add = table.GetType().GetMethod("Add");
                         add.Invoke(table, new[] { mappingEntity });
                     }
 
-                    //
-                    foreach (var prop in entityType.GetProperties().Where(p => p.GetAccessors().Any(a => (a.IsVirtual && !a.IsFinal))))
+                    foreach (var prop in entityType.GetProperties().Where(p => p.GetAccessors().Any(a => a.IsVirtual && !a.IsFinal)))
                     {
                         if (prop.GetSetMethod(false) != null)
                         {
@@ -403,7 +210,7 @@ namespace CrudDatastore.Framework
         {
             return (e) =>
             {
-                MarkEntityState(e, EntityEntry.States.Deleted,
+                _changeTracker.MarkEntityState(e, EntityEntry.States.Deleted,
 
                 /* on commit */
                 (obj) =>
@@ -417,49 +224,17 @@ namespace CrudDatastore.Framework
                         var mappingEntityType = _dataTableMapping[keyTypes];
                         var table = _dataQueries[mappingEntityType];
 
-                        var mappingEntity = Activator.CreateInstance(mappingEntityType);
-                        foreach (var p in mappingEntityType.GetProperties())
-                        {
-                            var value = default(object);
-
-                            var entryProp = parentType.GetProperty(p.Name);
-                            if (entryProp != null)
-                            {
-                                value = entryProp.GetValue(parent);
-                            }
-
-                            var entityProp = entityType.GetProperty(p.Name);
-                            if (entityProp != null)
-                            {
-                                value = entityProp.GetValue(obj);
-                            }
-
-                            p.SetValue(mappingEntity, value, null);
-                        }
+                        var mappingEntity = MappingEntityHelper.CreateMappingEntity(mappingEntityType, parent, parentType, obj, entityType);
 
                         var delete = table.GetType().GetMethod("Delete");
                         delete.Invoke(table, new[] { mappingEntity });
 
-
-                        // find
                         var param = Expression.Parameter(mappingEntityType, "e");
-                        var expression = default(Expression);
-                        foreach (var p in mappingEntityType.GetProperties())
-                        {
-                            var entityProp = entityType.GetProperty(p.Name);
-                            if (entityProp != null)
-                            {
-                                var propExpression = Expression.Equal(Expression.Property(param, entityProp.Name), Expression.Constant(entityProp.GetValue(obj)));
-                                if (expression != null)
-                                    expression = Expression.AndAlso(expression, propExpression);
-                                else
-                                    expression = propExpression;
-                            }
-                        }
+                        var expression = MappingEntityHelper.BuildEntityMatchExpression(mappingEntityType, entityType, obj, param);
 
                         var lambdaMethod = typeof(Expression)
-                                    .GetGenericMethod("Lambda", new[] { typeof(Expression), typeof(ParameterExpression[]) })
-                                    .MakeGenericMethod(new[] { typeof(Func<,>).MakeGenericType(new[] { mappingEntityType, typeof(bool) }) });
+                            .GetGenericMethod("Lambda", new[] { typeof(Expression), typeof(ParameterExpression[]) })
+                            .MakeGenericMethod(new[] { typeof(Func<,>).MakeGenericType(new[] { mappingEntityType, typeof(bool) }) });
                         var expressionPredicate = (LambdaExpression)lambdaMethod.Invoke(null, new object[] { expression, new[] { param } });
 
                         var specType = typeof(Specification<>).MakeGenericType(new[] { mappingEntityType });
@@ -469,8 +244,8 @@ namespace CrudDatastore.Framework
                         var data = find.Invoke(table, new[] { specObject });
 
                         var any = typeof(Enumerable)
-                                    .GetGenericMethod("Any", new[] { typeof(IEnumerable<>) })
-                                    .MakeGenericMethod(new Type[] { mappingEntityType });
+                            .GetGenericMethod("Any", new[] { typeof(IEnumerable<>) })
+                            .MakeGenericMethod(new Type[] { mappingEntityType });
 
                         var isAny = (bool)any.Invoke(null, new[] { data });
                         if (isAny)
@@ -481,184 +256,66 @@ namespace CrudDatastore.Framework
                 /* committed */
                 (obj) =>
                 {
-
-
                 });
             };
         }
 
-        private bool InvokeCreate(EntityEntry entry)
+        private void MarkModifiedObject(object entity)
         {
-            var entity = entry.Entity;
-            var entityType = GetEntityType(entity);
-            if (_dataQueries.ContainsKey(entityType))
-            {
-                EntityCreate?.Invoke(this, new EntityEventArgs(entity));
-
-                if (entry.State == EntityEntry.States.New)
-                {
-                    entry.OnCommit(entity);
-
-                    if (entry.State == EntityEntry.States.New)
-                    {
-                        var ds = _dataQueries[entityType];
-                        ds.GetType().GetMethod("Add").Invoke(ds, new[] { entity });
-
-                        entry.OnCommitted(entity);
-                    }
-                    else
-                        return false;
-                }
-                else
-                    return false;
-            }
-
-            return true;
+            GetMarkModifiedDispatcher(entity.GetType())(entity);
         }
 
-        private async Task<bool> InvokeCreateAsync(EntityEntry entry)
+        private Delegate CreateMarkNewOnCommitUpdatePropertiesDelegate(object parent, object expressionPredicate, Type relatedEntityType)
         {
-            var entity = entry.Entity;
-            var entityType = GetEntityType(entity);
-            if (_dataQueries.ContainsKey(entityType))
-            {
-                EntityCreate?.Invoke(this, new EntityEventArgs(entity));
-
-                if (entry.State == EntityEntry.States.New)
-                {
-                    entry.OnCommit(entity);
-
-                    if (entry.State == EntityEntry.States.New)
-                    {
-                        var ds = _dataQueries[entityType];
-                        await (Task)ds.GetType().GetMethod("AddAsync").Invoke(ds, new[] { entity });
-
-                        entry.OnCommitted(entity);
-                    }
-                    else
-                        return false;
-                }
-                else
-                    return false;
-            }
-
-            return true;
+            return GetMarkNewFactory(relatedEntityType)(parent, expressionPredicate);
         }
 
-        private bool InvokeUpdate(EntityEntry entry)
+        private ObjectAction GetMarkModifiedDispatcher(Type entityType)
         {
-            var entity = entry.Entity;
-            var entityType = GetEntityType(entity);
-            if (_dataQueries.ContainsKey(entityType))
+            lock (_dispatchSync)
             {
-                EntityUpdate?.Invoke(this, new EntityEventArgs(entity));
-
-                if (entry.State == EntityEntry.States.Modified)
+                ObjectAction dispatcher;
+                if (!_markModifiedDispatch.TryGetValue(entityType, out dispatcher))
                 {
-                    entry.OnCommit(entity);
-
-                    if (entry.State == EntityEntry.States.Modified)
-                    {
-                        var ds = _dataQueries[entityType];
-                        ds.GetType().GetMethod("Update").Invoke(ds, new[] { entity });
-
-                        entry.OnCommitted(entity);
-                    }
-                    else
-                        return false;
+                    var method = _methodCache.GetClosedGenericMethod(typeof(UnitOfWorkBase), nameof(MarkModified), entityType, BindingFlags.Instance | BindingFlags.Public);
+                    dispatcher = (entity) => method.Invoke(this, new[] { entity });
+                    _markModifiedDispatch[entityType] = dispatcher;
                 }
-                else
-                    return false;
-            }
 
-            return true;
+                return dispatcher;
+            }
         }
 
-        private async Task<bool> InvokeUpdateAsync(EntityEntry entry)
+        private Func<object, object, Delegate> GetMarkNewFactory(Type relatedEntityType)
         {
-            var entity = entry.Entity;
-            var entityType = GetEntityType(entity);
-            if (_dataQueries.ContainsKey(entityType))
+            lock (_dispatchSync)
             {
-                EntityUpdate?.Invoke(this, new EntityEventArgs(entity));
-
-                if (entry.State == EntityEntry.States.Modified)
+                Func<object, object, Delegate> factory;
+                if (!_markNewFactoryDispatch.TryGetValue(relatedEntityType, out factory))
                 {
-                    entry.OnCommit(entity);
-
-                    if (entry.State == EntityEntry.States.Modified)
-                    {
-                        var ds = _dataQueries[entityType];
-                        await (Task)ds.GetType().GetMethod("UpdateAsync").Invoke(ds, new[] { entity });
-
-                        entry.OnCommitted(entity);
-                    }
-                    else
-                        return false;
+                    var method = _methodCache.GetClosedGenericMethod(typeof(UnitOfWorkBase), nameof(MarkNewOnCommitUpdateProperties), relatedEntityType, BindingFlags.NonPublic | BindingFlags.Instance);
+                    factory = (parent, predicate) => (Delegate)method.Invoke(this, new[] { parent, predicate });
+                    _markNewFactoryDispatch[relatedEntityType] = factory;
                 }
-                else
-                    return false;
-            }
 
-            return true;
+                return factory;
+            }
         }
 
-        private bool InvokeDelete(EntityEntry entry)
+        private Func<object, Delegate> GetMarkDeletedFactory(Type relatedEntityType)
         {
-            var entity = entry.Entity;
-            var entityType = GetEntityType(entity);
-            if (_dataQueries.ContainsKey(entityType))
+            lock (_dispatchSync)
             {
-                EntityDelete?.Invoke(this, new EntityEventArgs(entity));
-
-                if (entry.State == EntityEntry.States.Deleted)
+                Func<object, Delegate> factory;
+                if (!_markDeletedFactoryDispatch.TryGetValue(relatedEntityType, out factory))
                 {
-                    entry.OnCommit(entity);
-
-                    if (entry.State == EntityEntry.States.Deleted)
-                    {
-                        var ds = _dataQueries[entityType];
-                        ds.GetType().GetMethod("Delete").Invoke(ds, new[] { entity });
-
-                        entry.OnCommitted(entity);
-                    }
-                    else
-                        return false;
+                    var method = _methodCache.GetClosedGenericMethod(typeof(UnitOfWorkBase), nameof(MarkDeletedOnCommitForDeletion), relatedEntityType, BindingFlags.NonPublic | BindingFlags.Instance);
+                    factory = (parent) => (Delegate)method.Invoke(this, new[] { parent });
+                    _markDeletedFactoryDispatch[relatedEntityType] = factory;
                 }
-                else
-                    return false;
+
+                return factory;
             }
-
-            return true;
-        }
-
-        private async Task<bool> InvokeDeleteAsync(EntityEntry entry)
-        {
-            var entity = entry.Entity;
-            var entityType = GetEntityType(entity);
-            if (_dataQueries.ContainsKey(entityType))
-            {
-                EntityDelete?.Invoke(this, new EntityEventArgs(entity));
-
-                if (entry.State == EntityEntry.States.Deleted)
-                {
-                    entry.OnCommit(entity);
-
-                    if (entry.State == EntityEntry.States.Deleted)
-                    {
-                        var ds = _dataQueries[entityType];
-                        await (Task)ds.GetType().GetMethod("DeleteAsync").Invoke(ds, new[] { entity });
-
-                        entry.OnCommitted(entity);
-                    }
-                    else
-                        return false;
-                }
-                else
-                    return false;
-            }
-
-            return true;
         }
 
         private Type GetEntityType(object entity)
@@ -676,11 +333,9 @@ namespace CrudDatastore.Framework
                     // Free other state (managed objects)
                 }
 
-                // Free your own state
                 _entityEntries.Clear();
                 _dataStores.Clear();
 
-                //
                 _disposed = true;
             }
 

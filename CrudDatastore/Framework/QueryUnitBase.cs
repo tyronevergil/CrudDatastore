@@ -15,6 +15,8 @@ namespace CrudDatastore.Framework
 
         private readonly object _sync = new object();
 
+        private readonly QueryMaterializationService _materialization;
+
         protected readonly IDictionary<Type, IDataQuery> _dataQueries = new Dictionary<Type, IDataQuery>();
 
         protected readonly IDictionary<PropertyInfo, Delegate> _dataMapping = new Dictionary<PropertyInfo, Delegate>();
@@ -27,102 +29,29 @@ namespace CrudDatastore.Framework
 
         protected QueryUnitBase()
         {
+            _materialization = new QueryMaterializationService(
+                _dataQueries,
+                _dataMapping,
+                _materializedEntities,
+                _materializedEntityProperties,
+                (entity) => EntityMaterialized?.Invoke(this, new EntityEventArgs(entity)),
+                (entity, resolveRelatedSynchronously) => CreateEntityProxyObjectInternal(entity, resolveRelatedSynchronously),
+                (entity, expressionPredicate, relatedEntityType, relatedData) => CreateRelatedEntityCollection(entity, expressionPredicate, relatedEntityType, relatedData));
         }
 
         private Expression<Func<T, bool>> ModifierPredicate<T>(Expression<Func<T, bool>> predicate) where T : EntityBase
         {
-            var modifiedPredicate = (Expression<Func<T, bool>>)InterceptNavigationPropertyExpressionTreeModifier.CopyAndModify(predicate, (entity, prop) => GetRelatedPropertyValue(entity, entity.GetType().GetProperty(prop)));
-            return modifiedPredicate;
-        }
-
-        private static object GetTaskResult(Task task)
-        {
-            task.GetAwaiter().GetResult();
-
-            var resultProperty = task.GetType().GetProperty("Result", BindingFlags.Public | BindingFlags.Instance);
-            if (resultProperty == null)
-                return null;
-
-            return resultProperty.GetValue(task);
-        }
-
-        private static async Task<object> GetTaskResultAsync(Task task)
-        {
-            await task.ConfigureAwait(false);
-
-            var resultProperty = task.GetType().GetProperty("Result", BindingFlags.Public | BindingFlags.Instance);
-            if (resultProperty == null)
-                return null;
-
-            return resultProperty.GetValue(task);
-        }
-
-        private object MaterializeQueryableData(Type entityType, object queryableData)
-        {
-            var toListMethod = typeof(Enumerable)
-                .GetGenericMethod("ToList", new[] { typeof(IEnumerable<>) })
-                .MakeGenericMethod(new[] { entityType });
-
-            var list = toListMethod.Invoke(null, new[] { queryableData });
-
-            var asQueryableMethod = typeof(Queryable)
-                .GetGenericMethod("AsQueryable", new[] { typeof(IEnumerable<>) })
-                .MakeGenericMethod(new[] { entityType });
-
-            return asQueryableMethod.Invoke(null, new[] { list });
+            return _materialization.ModifierPredicate(predicate);
         }
 
         private T MaterializeEntityObject<T>(T entity) where T : EntityBase
         {
-            if (entity == null)
-                return entity;
-
-            if (typeof(IObjectProxy).IsAssignableFrom(entity.GetType()))
-                return entity;
-
-            if (_materializedEntities.ContainsKey(entity))
-                return (T)_materializedEntities[entity];
-
-            var entityObject = CreateEntityProxyObject(entity);
-
-            _materializedEntities.Add(entity, entityObject);
-
-            EntityMaterialized?.Invoke(this, new EntityEventArgs(entityObject));
-
-            return entityObject;
+            return _materialization.MaterializeEntity(entity);
         }
 
         private async Task<T> MaterializeEntityObjectAsync<T>(T entity) where T : EntityBase
         {
-            if (entity == null)
-                return entity;
-
-            if (typeof(IObjectProxy).IsAssignableFrom(entity.GetType()))
-                return entity;
-
-            if (_materializedEntities.ContainsKey(entity))
-                return (T)_materializedEntities[entity];
-
-            var entityObject = CreateEntityProxyObject(entity, false);
-
-            _materializedEntities.Add(entity, entityObject);
-
-            var entityType = typeof(T);
-            foreach (var prop in entityType.GetProperties().Where(p => p.GetSetMethod(false) != null))
-            {
-                object value = prop.GetValue(entity, null);
-                if (value == null)
-                {
-                    value = await GetRelatedPropertyValueAsync(entity, prop).ConfigureAwait(false);
-                }
-
-                if (value != null)
-                    prop.SetValue(entityObject, value, null);
-            }
-
-            EntityMaterialized?.Invoke(this, new EntityEventArgs(entityObject));
-
-            return entityObject;
+            return await _materialization.MaterializeEntityAsync(entity).ConfigureAwait(false);
         }
 
         //private T CreateEntityCloneObject<T>(T entity) where T : EntityBase
@@ -217,54 +146,22 @@ namespace CrudDatastore.Framework
             return (T)obj;
         }
 
+        private object CreateEntityProxyObjectInternal(object entity, bool resolveRelatedSynchronously)
+        {
+            var method = typeof(QueryUnitBase).GetMethod(nameof(CreateEntityProxyObject), BindingFlags.Instance | BindingFlags.NonPublic);
+            var genericMethod = method.MakeGenericMethod(entity.GetType());
+            return genericMethod.Invoke(this, new object[] { entity, resolveRelatedSynchronously });
+        }
+
         protected async Task<object> GetRelatedPropertyValueAsync(object entity, PropertyInfo prop)
         {
-            object value = null;
-
-            if (_dataMapping.ContainsKey(prop))
-            {
-                var expressionPredicate = _dataMapping[prop].DynamicInvoke(entity, _dataQueries);
-
-                var propType = prop.PropertyType;
-                var isGenericType = propType.IsGenericType;
-
-                var relatedEntityType = isGenericType ? propType.GetGenericArguments().First() : propType;
-                if (_dataQueries.ContainsKey(relatedEntityType))
-                {
-                    var ds = _dataQueries[relatedEntityType];
-
-                    var specType = typeof(Specification<>).MakeGenericType(new[] { relatedEntityType });
-                    var specObject = Activator.CreateInstance(specType, new[] { expressionPredicate });
-
-                    // Always use async API (single code path)
-                    var findAsyncMethod = ds.GetType().GetMethod("FindAsync");
-                    var task = (Task)findAsyncMethod.Invoke(ds, new[] { specObject });
-                    var relatedData = await GetTaskResultAsync(task).ConfigureAwait(false);
-                    relatedData = MaterializeQueryableData(relatedEntityType, relatedData);
-
-                    if (isGenericType)
-                    {
-                        value = CreateRelatedEntityCollection(entity, expressionPredicate, relatedEntityType, relatedData);
-                    }
-                    else
-                    {
-                        var firstOrDefaultMethod = typeof(Queryable)
-                                .GetGenericMethod("FirstOrDefault", new[] { typeof(IQueryable<>) })
-                                .MakeGenericMethod(new Type[] { relatedEntityType });
-                        var firstEntityObject = firstOrDefaultMethod.Invoke(null, new[] { relatedData });
-
-                        value = firstEntityObject;
-                    }
-                }
-            }
-
-            return value;
+            return await _materialization.GetRelatedPropertyValueAsync(entity, prop).ConfigureAwait(false);
         }
 
         // Sync wrapper for proxy initialization (blocks on async call)
         protected object GetRelatedPropertyValue(object entity, PropertyInfo prop)
         {
-            return GetRelatedPropertyValueAsync(entity, prop).GetAwaiter().GetResult();
+            return _materialization.GetRelatedPropertyValue(entity, prop);
         }
 
         protected virtual object CreateRelatedEntityCollection(object entity, object expressionPredicate, Type relatedEntityType, object relatedData)
