@@ -5,20 +5,20 @@ using CrudDatastore.Internal;
 
 namespace CrudDatastore
 {
-    public abstract class ReadContextBase : IReadContext, ICommandContext, IDisposable
+    public abstract class QueryContextBase : IQueryContext, ICommandContext, IDisposable
     {
         private bool _disposed;
         private readonly IQueryUnit _queryUnit;
 
-        public ReadContextBase(IQueryUnitSync queryUnitSync)
+        public QueryContextBase(IQueryUnitSync queryUnitSync)
             : this(new QueryUnitSyncAdapter(queryUnitSync))
         { }
 
-        public ReadContextBase(IQueryUnitAsync queryUnitAsync)
+        public QueryContextBase(IQueryUnitAsync queryUnitAsync)
             : this(new QueryUnitAsyncAdapter(queryUnitAsync))
         { }
 
-        public ReadContextBase(IQueryUnit queryUnit)
+        public QueryContextBase(IQueryUnit queryUnit)
         {
             _queryUnit = queryUnit;
             _queryUnit.EntityMaterialized += (sender, args) => OnEntityMaterialized(args.Entity);
@@ -81,7 +81,7 @@ namespace CrudDatastore
             GC.SuppressFinalize(this);
         }
 
-        ~ReadContextBase()
+        ~QueryContextBase()
         {
             Dispose(false);
         }

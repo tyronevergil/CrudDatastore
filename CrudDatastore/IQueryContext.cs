@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace CrudDatastore
 {
-    public interface IReadContext
+    public interface IQueryContext
     {
         IQueryable<T> Find<T>(ISpecification<T> specification) where T : EntityBase;
         Task<IQueryable<T>> FindAsync<T>(ISpecification<T> specification) where T : EntityBase;

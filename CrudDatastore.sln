@@ -39,11 +39,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CrudDatastore", "CrudDatast
 		CrudDatastore\IDataStore.cs = CrudDatastore\IDataStore.cs
 		CrudDatastore\IQuery.cs = CrudDatastore\IQuery.cs
 		CrudDatastore\IQueryUnit.cs = CrudDatastore\IQueryUnit.cs
-		CrudDatastore\IReadContext.cs = CrudDatastore\IReadContext.cs
+		CrudDatastore\IQueryContext.cs = CrudDatastore\IQueryContext.cs
 		CrudDatastore\ISpecification.cs = CrudDatastore\ISpecification.cs
 		CrudDatastore\IUnitOfWork.cs = CrudDatastore\IUnitOfWork.cs
-		CrudDatastore\ReadContextBase.cs = CrudDatastore\ReadContextBase.cs
-		CrudDatastore\ReadContextExtensions.cs = CrudDatastore\ReadContextExtensions.cs
+		CrudDatastore\QueryContextBase.cs = CrudDatastore\QueryContextBase.cs
+		CrudDatastore\QueryContextExtensions.cs = CrudDatastore\QueryContextExtensions.cs
 		CrudDatastore\Specification.cs = CrudDatastore\Specification.cs
 	EndProjectSection
 EndProject
@@ -133,3 +133,5 @@ Global
 		SolutionGuid = {B93C4EB7-C9C4-445F-A8D3-44B28812A26B}
 	EndGlobalSection
 EndGlobal
+
+

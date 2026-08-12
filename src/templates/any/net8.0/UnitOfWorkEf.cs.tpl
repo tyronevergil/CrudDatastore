@@ -4,6 +4,7 @@ using System.Linq;
 using CrudDatastore;
 using CrudDatastore.Foundation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace {{RootNamespace}}
 {
@@ -53,7 +54,26 @@ namespace {{RootNamespace}}
                 optionsBuilder.UseSqlServer(_connectionString);
             }
 
+            var interceptorAlreadyAdded = optionsBuilder.Options
+                .FindExtension<CoreOptionsExtension>()?
+                .Interceptors.Any(x => x.GetType().Name == "MaterializationInterceptor") ?? false;
+
+            if (!interceptorAlreadyAdded)
+            {
+                optionsBuilder
+                    .AddInterceptors(new MaterializationInterceptor((entity) =>
+                    {
+                        RaiseEntityMaterialized(entity);
+                        return entity;
+                    }));
+            }
+
             base.OnConfiguring(optionsBuilder);
+        }
+
+        protected void RaiseEntityMaterialized(object entity)
+        {
+            EntityMaterialized?.Invoke(this, new EntityEventArgs(entity));
         }
 
         public override int SaveChanges()
@@ -145,5 +165,25 @@ namespace {{RootNamespace}}
                 }
             )
         { }
+    }
+
+    internal class MaterializationInterceptor : IMaterializationInterceptor
+    {
+        private Func<object, object> _interceptor;
+
+        public MaterializationInterceptor(Func<object, object> interceptor)
+        {
+            _interceptor = interceptor;
+        }
+
+        public object InitializedInstance(MaterializationInterceptionData materializationData, object instance)
+        {
+            if (instance is EntityBase entity)
+            {
+                instance = _interceptor(entity);
+            }
+
+            return instance;
+        }
     }
 }
