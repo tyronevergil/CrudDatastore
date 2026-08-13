@@ -5,6 +5,7 @@ using CrudDatastore;
 using CrudDatastore.Foundation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace {{RootNamespace}}
 {
