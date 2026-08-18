@@ -20,7 +20,7 @@ namespace CrudDatastore
 
         public QueryContextBase(IQueryUnit queryUnit)
         {
-            _queryUnit = queryUnit;
+            _queryUnit = queryUnit ?? throw new ArgumentNullException(nameof(queryUnit));
             _queryUnit.EntityMaterialized += (sender, args) => OnEntityMaterialized(args.Entity);
         }
 
@@ -28,22 +28,22 @@ namespace CrudDatastore
         {
         }
 
-        public IQueryable<T> Find<T>(ISpecification<T> specification) where T : EntityBase
+        public virtual IQueryable<T> Find<T>(ISpecification<T> specification) where T : EntityBase
         {
             return _queryUnit.Read<T>().Find(specification);
         }
 
-        public Task<IQueryable<T>> FindAsync<T>(ISpecification<T> specification) where T : EntityBase
+        public virtual Task<IQueryable<T>> FindAsync<T>(ISpecification<T> specification) where T : EntityBase
         {
             return _queryUnit.Read<T>().FindAsync(specification);
         }
 
-        public T FindSingle<T>(ISpecification<T> specification) where T : EntityBase
+        public virtual T FindSingle<T>(ISpecification<T> specification) where T : EntityBase
         {
             return _queryUnit.Read<T>().FindSingle(specification);
         }
 
-        public Task<T> FindSingleAsync<T>(ISpecification<T> specification) where T : EntityBase
+        public virtual Task<T> FindSingleAsync<T>(ISpecification<T> specification) where T : EntityBase
         {
             return _queryUnit.Read<T>().FindSingleAsync(specification);
         }
