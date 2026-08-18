@@ -10,7 +10,7 @@ namespace CrudDatastore
     /// For synchronous-only implementations, implement <see cref="IUnitOfWorkSync"/> instead.
     /// For asynchronous-only implementations, implement <see cref="IUnitOfWorkAsync"/> instead.
     /// </summary>
-    public interface IUnitOfWork : IUnitOfWorkSync, IUnitOfWorkAsync
+    public interface IUnitOfWork : IQueryUnit, IUnitOfWorkSync, IUnitOfWorkAsync
     {
     }
 }
