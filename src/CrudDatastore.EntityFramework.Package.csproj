@@ -15,7 +15,7 @@
     <Product>CrudDatastore.EntityFramework</Product>
     <Description>CrudDatastore EntityFramework boilerplate templates and abstractions</Description>
     <PackageTags>orm;crud;repository;data;datastore;entityframework;ef6;efcore</PackageTags>
-    <Version>2.0.0-preview.4</Version>
+    <Version>2.0.0-preview.5</Version>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
   </PropertyGroup>
@@ -68,7 +68,7 @@
 
   <!-- CrudDatastore dependency for all frameworks -->
   <ItemGroup>
-    <PackageReference Include="CrudDatastore" Version="2.0.0-preview.4" />
+    <PackageReference Include="CrudDatastore" Version="2.0.0-preview.5" />
   </ItemGroup>
 
 </Project>
